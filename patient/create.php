@@ -21,7 +21,7 @@
 
 <div class="form-group">
 <label>№ АК</label>
-<input type="text" name="card_number" id="ak" readonly>
+<input type="text" name="medical_card_number" id="ak" readonly>
 </div>
 </div>
 
@@ -73,6 +73,23 @@
 <div class="form-group">
 <label>Номер</label>
 <input type="text" name="document_number" required>
+</div>
+</div>
+
+<div class="form-group">
+<label>Кем выдан</label>
+<input type="text" name="document_authority" required>
+</div>
+
+<div class="row">
+<div class="form-group">
+<label>Код структурного подразделения</label>
+<input type="text" name="document_authority_code" required>
+</div>
+
+<div class="form-group">
+<label>Дата выдачи</label>
+<input type="text" name="document_date" required>
 </div>
 </div>
 
