@@ -6,25 +6,12 @@ $patients = [];
 
 // --- ПОИСК ---
 if ($search) {
-    if (preg_match('/^\d+$/', $search)) {
-        // поиск по № АК
-        $sql = "
-            SELECT 
-                p.id,
-                p.medical_card_number,
-                p.last_name,
-                p.first_name,
-                p.middle_name,
-                p.birth_date,
-                MAX(v.exam_date) AS last_exam_date
-            FROM patients p
-            LEFT JOIN visits v ON v.patient_id = p.id
-            WHERE p.medical_card_number ILIKE :search
-            GROUP BY p.id
-            ORDER BY p.last_name
-        ";
-    } else {
-        // поиск по ФИО
+    $searchTrimmed = trim($search);
+    $wordCount = str_word_count($searchTrimmed, 0, 'абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ');
+    
+    // Определяем тип поиска по количеству слов
+    if ($wordCount === 0 || strpos($searchTrimmed, ' ') === false) {
+        // Нет пробелов - поиск по номеру карты ИЛИ по фамилии
         $sql = "
             SELECT 
                 p.id,
@@ -37,16 +24,47 @@ if ($search) {
             FROM patients p
             LEFT JOIN visits v ON v.patient_id = p.id
             WHERE 
-                p.last_name ILIKE :search OR
-                p.first_name ILIKE :search OR
-                p.middle_name ILIKE :search
+                p.medical_card_number ILIKE :search OR
+                p.last_name ILIKE :search_last_name
+            GROUP BY p.id
+            ORDER BY 
+                CASE 
+                    WHEN p.medical_card_number ILIKE :search THEN 1
+                    WHEN p.last_name ILIKE :search_exact THEN 2
+                    ELSE 3
+                END,
+                p.last_name
+        ";
+        // Поиск по номеру карты с начала, по фамилии - точное совпадение или с начала
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            'search' => $searchTrimmed . '%',
+            'search_last_name' => $searchTrimmed . '%',
+            'search_exact' => $searchTrimmed
+        ]);
+    } else {
+        // Есть пробелы - поиск по полному ФИО
+        $sql = "
+            SELECT 
+                p.id,
+                p.medical_card_number,
+                p.last_name,
+                p.first_name,
+                p.middle_name,
+                p.birth_date,
+                MAX(v.exam_date) AS last_exam_date
+            FROM patients p
+            LEFT JOIN visits v ON v.patient_id = p.id
+            WHERE 
+                CONCAT(p.last_name, ' ', p.first_name, ' ', COALESCE(p.middle_name, '')) ILIKE :search
             GROUP BY p.id
             ORDER BY p.last_name
         ";
+        // Поиск по любой части ФИО
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(['search' => '%' . $searchTrimmed . '%']);
     }
 
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute(['search' => "%$search%"]);
     $patients = $stmt->fetchAll();
 }
 
@@ -82,18 +100,24 @@ $todayVisits = $pdo->query($todaySql)->fetchAll();
 <div class="container">
 <h2>Регистратура</h2>
 
+<div style="margin-bottom: 20px;">
 <a href="patient/patients.php">
     <button type="button">Список всех пациентов</button>
 </a>
+</div>
 
 <!-- ПОИСК -->
 <form method="GET" class="form-group">
     <input 
         type="text" 
         name="search" 
-        placeholder="Поиск: ФИО или № амбулаторной карты"
+        placeholder="Введите: № карты, фамилию или полное ФИО"
         value="<?= htmlspecialchars($search) ?>"
+        style="width: 400px;"
     >
+    <div style="margin-top: 20px;">
+        <button type="submit">Найти</button>
+    </div>
 </form>
 
 <!-- РЕЗУЛЬТАТЫ ПОИСКА -->
@@ -133,13 +157,26 @@ $todayVisits = $pdo->query($todaySql)->fetchAll();
                             : '—' ?>
                     </td>
                 </tr>
-
             <?php endforeach; ?>
-                 <a href="patient/create.php?<?= $query ?>">
-                    <button type="button">Создать пациента</button>
-                </a>
+
             </tbody>
         </table>
+
+        <?php
+        // Подготовка данных для создания нового пациента
+        $parts = explode(' ', trim($search));
+        $query = http_build_query([
+            'last_name' => $parts[0] ?? '',
+            'first_name' => $parts[1] ?? '',
+            'middle_name' => $parts[2] ?? ''
+        ]);
+        ?>
+        
+        <div style="margin-top: 20px;">
+        <a href="patient/create.php?<?= $query ?>">
+            <button type="button">Создать нового пациента</button>
+        </a>
+        </div>
 
     <?php else: ?>
 
