@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const point = document.getElementById('psychiatricFactors');
 
     function togglePsy() {
-        if (need.value === 'yes') {
+        if (need.value === 'true') {
             point.disabled = false;
             point.parentElement.style.opacity = '1';
         } else {
@@ -22,4 +22,89 @@ document.addEventListener('DOMContentLoaded', function () {
     need.addEventListener('change', togglePsy);
 
     togglePsy(); // инициализация при загрузке
+
+    // телефон
+    const input = document.getElementById('phoneNumber');
+    input.addEventListener('input', function (e) {
+        let value = e.target.value;
+        let digits = value.replace(/\D/g, '');
+
+        if (digits.startsWith('8')) {
+            digits = '7' + digits.slice(1);
+        }
+
+        if (!digits.startsWith('7')) {
+            digits = '7' + digits;
+        }
+
+        digits = digits.substring(0, 11);
+
+        let formatted = '+7';
+
+        if (digits.length > 1) formatted += ' ' + digits.substring(1, 4);
+        if (digits.length >= 5) formatted += ' ' + digits.substring(4, 7);
+        if (digits.length >= 8) formatted += ' ' + digits.substring(7, 9);
+        if (digits.length >= 10) formatted += ' ' + digits.substring(9, 11);
+
+        e.target.value = formatted;
+    });
+
+    const searchInput = document.getElementById('employerSearch');
+    const dropdown = document.getElementById('employerDropdown');
+    const employerIdInput = document.getElementById('employerId');
+
+    searchInput.addEventListener('input', async () => {
+        const q = searchInput.value;
+
+        if (q.length < 2) {
+            dropdown.innerHTML = '';
+            return;
+        }
+
+        const res = await fetch(`/api/employers.php?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+
+        dropdown.innerHTML = '';
+
+        data.forEach(emp => {
+            const div = document.createElement('div');
+            div.classList.add('dropdown-item');
+            div.innerText = `${emp.name} (ИНН: ${emp.inn ?? '-'})`;
+
+            div.onclick = () => selectEmployer(emp.id);
+
+            dropdown.appendChild(div);
+        });
+    });
+
+    async function selectEmployer(id) {
+        const res = await fetch(`/api/employer.php?id=${id}`);
+        const emp = await res.json();
+
+        employerIdInput.value = emp.id;
+
+        // ВАЖНО: синхронизация обоих полей
+        document.getElementById('organizationName').value = emp.name;
+        document.getElementById('employerSearch').value = emp.name;
+
+        document.getElementById('inn').value = emp.inn;
+        document.getElementById('ogrn').value = emp.ogrn;
+        document.getElementById('okvd').value = emp.okvd;
+        document.getElementById('phoneNumber').value = emp.phone;
+        document.getElementById('email').value = emp.email;
+        document.getElementById('region').value = emp.region;
+        document.getElementById('district').value = emp.district;
+        document.getElementById('locality').value = emp.locality;
+        document.getElementById('street').value = emp.street;
+        document.getElementById('house').value = emp.house;
+        document.getElementById('building').value = emp.building;
+        document.getElementById('flat').value = emp.flat;
+
+        dropdown.innerHTML = '';
+    }
+
+    searchInput.addEventListener('input', () => {
+        employerIdInput.value = null;
+        document.getElementById('organizationName').value = searchInput.value;
+    });
 });

@@ -59,8 +59,14 @@ if (!$patient) {
 </div>
 
 <div class="form-group">
-<label>Место работы, учебы</label>
-<input type="text" name="organization_name" id="organizationName" required>
+    <label>Место работы, учебы</label>
+
+    <input type="text" id="employerSearch" placeholder="Начните вводить название..." autocomplete="off">
+
+    <input type="hidden" name="employer_id" id="employerId">
+    <input type="hidden" name="organization_name" id="organizationName">
+
+    <div id="employerDropdown" class="dropdown"></div>
 </div>
 
 <div class="form-group">
@@ -99,12 +105,17 @@ if (!$patient) {
 
 <div class="form-group">
 <label>ИНН</label>
-<input type="text" name="inn" id="INN" required>
+<input type="text" name="inn" id="inn" required>
 </div>
 
 <div class="form-group">
 <label>ОГРН (ОГРНИП)</label>
-<input type="text" name="ogrn" required>
+<input type="text" name="ogrn" id="ogrn" required>
+</div>
+
+<div class="form-group">
+<label>ОКВЭД</label>
+<input type="text" name="okvd" id="okvd">
 </div>
 </div>
 
@@ -117,7 +128,7 @@ if (!$patient) {
 
 <div class="form-group">
 <label>Адрес электронной почты работодателя</label>
-<input type="email" name="employer_email" placeholder="example@mail.com">
+<input type="email" name="employer_email" id="email" placeholder="example@mail.com">
 </div>
 </div>
 
@@ -126,41 +137,41 @@ if (!$patient) {
 <div class="row">
 <div class="form-group">
 <label>Субъект РФ</label>
-<input type="text" name="employer_region" value="Красноярский край" required>
+<input type="text" name="employer_region" id="region" value="Красноярский край" required>
 </div>
 
 <div class="form-group">
 <label>Регион</label>
-<input type="text" name="employer_district">
+<input type="text" name="employer_district" id="district" id="district">
 </div>
 
 <div class="form-group">
 <label>Населенный пункт</label>
-<input type="text" name="employer_locality" value="г. Красноярск" required>
+<input type="text" name="employer_locality" id="locality" value="г. Красноярск" required>
 </div>
 </div>
 
 <div class="row">
 <div class="form-group">
 <label>Улица</label>
-<input type="text" name="employer_street" required>
+<input type="text" name="employer_street" id="street" required>
 </div>
 
 <div class="form-group">
 <label>Дом</label>
-<input type="text" name="employer_house" required>
+<input type="text" name="employer_house" id="house" required>
 </div>
 </div>
 
 <div class="row">
 <div class="form-group">
 <label>Корпус</label>
-<input type="text" name="employer_building">
+<input type="text" name="employer_building" id="building">
 </div>
 
 <div class="form-group">
 <label>Квартира</label>
-<input type="text" name="employer_flat">
+<input type="text" name="employer_flat" id="flat">
 </div>
 </div>
 

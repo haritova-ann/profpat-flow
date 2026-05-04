@@ -10,6 +10,7 @@ try {
     // 1. Получаем данные
     // ======================
     $patientId = $_POST['patient_id'] ?? null;
+    $employerId = !empty($_POST['employer_id']) ? (int)$_POST['employer_id'] : null;
 
     $examDate = $_POST['exam_date'] ?? null;
     $examType = $_POST['exam_type'] ?? null;
@@ -20,11 +21,12 @@ try {
 
     $hazardsString = $_POST['hazard_factors'] ?? '';
 
-    $psychiatric_exam = $_POST['psychiatric_exam'] === 'true' ? true : false;
+    $psychiatric_exam = $_POST['psychiatric_exam'] === 'true';
     $psychiatricFactors = $_POST['psychiatric_factors'] ?? null;
 
     $inn = $_POST['inn'] ?? null;
     $ogrn = $_POST['ogrn'] ?? null;
+    $okvd = $_POST['okvd'] ?? null;
 
     $employerPhone = $_POST['employer_phone'] ?? null;
     $employerEmail = $_POST['employer_email'] ?? null;
@@ -45,13 +47,48 @@ try {
     // 2. Дата
     // ======================
     $examDateSql = date('Y-m-d H:i:s');
+    // ======================
+// 2.5 Работодатель (создание при необходимости)
+// ======================
+if (empty($employerId) && !empty($organizationName)) {
 
+    $stmt = $pdo->prepare("
+        INSERT INTO employers (
+            name, inn, ogrn, okvd, phone, email,
+            region, district, locality, street, house, building, flat
+        )
+        VALUES (
+            :name, :inn, :ogrn, :okvd, :phone, :email,
+            :region, :district, :locality, :street, :house, :building, :flat
+        )
+        RETURNING id
+    ");
+
+    $stmt->execute([
+        'name' => $organizationName,
+        'inn' => $inn,
+        'ogrn' => $ogrn,
+        'okvd' => $okvd,
+        'phone' => $employerPhone,
+        'email' => $employerEmail,
+        'region' => $employerRegion,
+        'district' => $employerDistrict,
+        'locality' => $employerLocality,
+        'street' => $employerStreet,
+        'house' => $employerHouse,
+        'building' => $employerBuilding,
+        'flat' => $employerFlat
+    ]);
+
+    $employerId = $stmt->fetchColumn();
+}
     // ======================
     // 3. Вставка визита
     // ======================
     $stmt = $pdo->prepare("
         INSERT INTO visits (
             patient_id,
+            employer_id,
             exam_date,
             exam_type,
             organization_name,
@@ -72,6 +109,7 @@ try {
             employer_flat
         ) VALUES (
             :patient_id,
+            :employer_id,
             :exam_date,
             :exam_type,
             :organization_name,
@@ -96,6 +134,7 @@ try {
 
     $stmt->execute([
         'patient_id' => $patientId,
+        'employer_id' => $employerId,
         'exam_date' => $examDateSql,
         'exam_type' => $examType,
         'organization_name' => $organizationName,

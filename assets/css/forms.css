@@ -173,3 +173,22 @@ button:hover {
 .edit-btn:hover {
     background: #F57C00;
 }
+
+
+.dropdown {
+    max-height: 150px;
+    overflow-y: auto;
+    background: white;
+    position: absolute;
+    width: 100%;
+    z-index: 10;
+}
+
+.dropdown-item {
+    padding: 8px;
+    cursor: pointer;
+}
+
+.dropdown-item:hover {
+    background: #f0f0f0;
+}

@@ -48,6 +48,7 @@ CREATE TABLE visits (
 
     inn TEXT,
     ogrn TEXT,
+    okvd TEXT,
     employer_phone TEXT,
     employer_email TEXT,
 
@@ -60,7 +61,9 @@ CREATE TABLE visits (
     employer_flat TEXT,
 
     psychiatric_exam BOOLEAN DEFAULT FALSE,
-    psychiatric_factors TEXT
+    psychiatric_factors TEXT,
+
+    employer_id INT NULL
 );
 
 -- ======================
@@ -101,6 +104,24 @@ CREATE TABLE visit_psychiatric_factors (
     psychiatric_factor_id INT NOT NULL REFERENCES psychiatric_factors(id) ON DELETE CASCADE,
 
     UNIQUE (visit_id, psychiatric_factor_id)
+);
+
+CREATE TABLE employers (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    inn VARCHAR(12),
+    ogrn VARCHAR(15),
+    okvd TEXT,
+    phone TEXT,
+    email TEXT,
+    region TEXT,
+    district TEXT,
+    locality TEXT,
+    street TEXT,
+    house TEXT,
+    building TEXT,
+    flat TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
 );
 
 -- ======================

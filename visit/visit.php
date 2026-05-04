@@ -295,6 +295,10 @@ $employerAddress = trim(implode(', ', array_filter([
         <button class="print-btn" onclick="printDocument('psyhiatric_certificate')">
             Справка психиатра-нарколога
         </button>
+
+        <button class="print-btn" onclick="printDocument('medical_record_extract')">
+            Выписка из медицинской карты
+        </button>
     </div>
 </div>
 
