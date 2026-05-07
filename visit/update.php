@@ -30,11 +30,12 @@ try {
 
     $hazardsString = $_POST['hazard_factors'] ?? '';
 
-    $psychiatric_exam = $_POST['psychiatric_exam'] === 'true' ? true : false;
+    $psychiatricExam = ($_POST['psychiatric_exam'] ?? 'false') === 'true' ? 1 : 0;
     $psychiatricFactors = $_POST['psychiatric_factors'] ?? null;
 
     $inn = $_POST['inn'] ?? null;
     $ogrn = $_POST['ogrn'] ?? null;
+    $okvd = $_POST['okvd'] ?? null;
 
     $employerPhone = $_POST['employer_phone'] ?? null;
     $employerEmail = $_POST['employer_email'] ?? null;
@@ -71,6 +72,7 @@ try {
             psychiatric_factors = :psychiatric_factors,
             inn = :inn,
             ogrn = :ogrn,
+            okvd =:okvd,
             employer_phone = :employer_phone,
             employer_email = :employer_email,
             employer_region = :employer_region,
@@ -89,10 +91,11 @@ try {
         'organization_name' => $organizationName,
         'organization_department' => $organizationDepartment,
         'position' => $position,
-        'psychiatric_exam' => $psychiatric_exam,
+        'psychiatric_exam' => $psychiatricExam,
         'psychiatric_factors' => $psychiatricFactors,
         'inn' => $inn,
         'ogrn' => $ogrn,
+        'okvd' => $okvd,
         'employer_phone' => $employerPhone,
         'employer_email' => $employerEmail,
         'employer_region' => $employerRegion,

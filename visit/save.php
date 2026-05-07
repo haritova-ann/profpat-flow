@@ -21,8 +21,8 @@ try {
 
     $hazardsString = $_POST['hazard_factors'] ?? '';
 
-    $psychiatric_exam = $_POST['psychiatric_exam'] === 'true';
-    $psychiatricFactors = $_POST['psychiatric_factors'] ?? null;
+    $psychiatricExam = ($_POST['psychiatric_exam'] ?? 'false') === 'true' ? 1 : 0;
+    $psychiatricFactorsString = $_POST['psychiatric_factors'] ?? '';
 
     $inn = $_POST['inn'] ?? null;
     $ogrn = $_POST['ogrn'] ?? null;
@@ -48,42 +48,42 @@ try {
     // ======================
     $examDateSql = date('Y-m-d H:i:s');
     // ======================
-// 2.5 Работодатель (создание при необходимости)
-// ======================
-if (empty($employerId) && !empty($organizationName)) {
-
-    $stmt = $pdo->prepare("
-        INSERT INTO employers (
-            name, inn, ogrn, okvd, phone, email,
-            region, district, locality, street, house, building, flat
-        )
-        VALUES (
-            :name, :inn, :ogrn, :okvd, :phone, :email,
-            :region, :district, :locality, :street, :house, :building, :flat
-        )
-        RETURNING id
-    ");
-
-    $stmt->execute([
-        'name' => $organizationName,
-        'inn' => $inn,
-        'ogrn' => $ogrn,
-        'okvd' => $okvd,
-        'phone' => $employerPhone,
-        'email' => $employerEmail,
-        'region' => $employerRegion,
-        'district' => $employerDistrict,
-        'locality' => $employerLocality,
-        'street' => $employerStreet,
-        'house' => $employerHouse,
-        'building' => $employerBuilding,
-        'flat' => $employerFlat
-    ]);
-
-    $employerId = $stmt->fetchColumn();
-}
+    // 3. Работодатель (создание при необходимости)
     // ======================
-    // 3. Вставка визита
+    if (empty($employerId) && !empty($organizationName)) {
+
+        $stmt = $pdo->prepare("
+            INSERT INTO employers (
+                name, inn, ogrn, okvd, phone, email,
+                region, district, locality, street, house, building, flat
+            )
+            VALUES (
+                :name, :inn, :ogrn, :okvd, :phone, :email,
+                :region, :district, :locality, :street, :house, :building, :flat
+            )
+            RETURNING id
+        ");
+
+        $stmt->execute([
+            'name' => $organizationName,
+            'inn' => $inn,
+            'ogrn' => $ogrn,
+            'okvd' => $okvd,
+            'phone' => $employerPhone,
+            'email' => $employerEmail,
+            'region' => $employerRegion,
+            'district' => $employerDistrict,
+            'locality' => $employerLocality,
+            'street' => $employerStreet,
+            'house' => $employerHouse,
+            'building' => $employerBuilding,
+            'flat' => $employerFlat
+        ]);
+
+        $employerId = $stmt->fetchColumn();
+    }
+    // ======================
+    // 4. Вставка визита
     // ======================
     $stmt = $pdo->prepare("
         INSERT INTO visits (
@@ -98,6 +98,7 @@ if (empty($employerId) && !empty($organizationName)) {
             psychiatric_factors,
             inn,
             ogrn,
+            okvd,
             employer_phone,
             employer_email,
             employer_region,
@@ -119,6 +120,7 @@ if (empty($employerId) && !empty($organizationName)) {
             :psychiatric_factors,
             :inn,
             :ogrn,
+            :okvd,
             :employer_phone,
             :employer_email,
             :employer_region,
@@ -144,6 +146,7 @@ if (empty($employerId) && !empty($organizationName)) {
         'psychiatric_factors' => $psychiatricFactors,
         'inn' => $inn,
         'ogrn' => $ogrn,
+        'okvd' => $okvd,
         'employer_phone' => $employerPhone,
         'employer_email' => $employerEmail,
         'employer_region' => $employerRegion,
@@ -158,7 +161,7 @@ if (empty($employerId) && !empty($organizationName)) {
     $visitId = $stmt->fetchColumn();
 
     // ======================
-    // 4. Парсинг вредностей (КОДЫ!)
+    // 5. Парсинг вредных факторов (КОДЫ!)
     // ======================
     $codes = preg_split('/[,;]+/', $hazardsString);
     $codes = array_map('trim', $codes);
@@ -188,10 +191,41 @@ if (empty($employerId) && !empty($organizationName)) {
         ]);
     }
 
+    // ======================
+    // 6. Парсинг психиатрических факторов (КОДЫ!)
+    // ======================
+    $psyCodes = preg_split('/[,;]+/', $psychiatricFactorsString);
+    $psyCodes = array_map('trim', $psyCodes);
+    $psyCodes = array_filter($psyCodes);
+    $psyCodes = array_unique($psyCodes);
+
+    foreach ($psyCodes as $psyCode) {
+
+        $stmt = $pdo->prepare("
+            SELECT id FROM psychiatric_factors WHERE code = :psyCode
+        ");
+        $stmt->execute(['psyCode' => $psyCode]);
+
+        $psyCodeId = $stmt->fetchColumn();
+
+        if (!$psyCodeId) {
+            throw new Exception("Неизвестный фактор: $psyCode");
+        }
+
+        $stmt = $pdo->prepare("
+            INSERT INTO visit_psychiatric_factors (visit_id, psychiatric_factor_id)
+            VALUES (:visit_id, :psy_code_id)
+        ");
+        $stmt->execute([
+            'visit_id' => $visitId,
+            'psy_code_id' => $psyCodeId
+        ]);
+    }
+
     $pdo->commit();
 
     // ======================
-    // 5. Возврат в карточку
+    // 7. Возврат в карточку
     // ======================
     header("Location: /../patient/patient.php?id=" . $patientId);
     exit;

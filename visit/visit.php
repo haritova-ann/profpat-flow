@@ -25,11 +25,14 @@ $stmt = $pdo->prepare("
         v.id AS visit_id,
         v.*,
         p.*,
-        STRING_AGG(hf.code, ', ') AS hazard_factors
+        STRING_AGG(DISTINCT hf.code, ', ') AS hazard_factors,
+        STRING_AGG(DISTINCT pf.code, ', ') AS psychiatric_factors
     FROM visits v
     JOIN patients p ON p.id = v.patient_id
     LEFT JOIN visit_hazard_factors vhf ON vhf.visit_id = v.id
     LEFT JOIN hazard_factors hf ON hf.id = vhf.hazard_factor_id
+    LEFT JOIN visit_psychiatric_factors vpf ON vpf.visit_id = v.id
+    LEFT JOIN psychiatric_factors pf ON pf.id = vpf.psychiatric_factor_id
     WHERE v.id = :id
     GROUP BY v.id, p.id
 ");
@@ -75,16 +78,16 @@ function e($text) {
     $documentType = $documentTypes[$data['document_type']] ?? $data['document_type'];
     $document = trim($documentType . ': серия ' . $data['document_series'] . ' №' . $data['document_number'] . ' выдан: ' . $data['document_authority'] . ' ' . $data['document_authority_code']  . ' ' . $data['document_date']);
 
-    // Форматируем адрес работодателя
-$employerAddress = trim(implode(', ', array_filter([
-    $data['employer_region'],
-    $data['employer_district'],
-    $data['employer_locality'],
-    $data['employer_street'],
-    $data['employer_house'] ? 'д. ' . $data['employer_house'] : '',
-    $data['employer_building'] ? 'корп. ' . $data['employer_building'] : '',
-    $data['employer_flat'] ? 'кв. ' . $data['employer_flat'] : ''
-])));
+// Форматируем адрес работодателя
+    $employerAddress = trim(implode(', ', array_filter([
+        $data['employer_region'],
+        $data['employer_district'],
+        $data['employer_locality'],
+        $data['employer_street'],
+        $data['employer_house'] ? 'д. ' . $data['employer_house'] : '',
+        $data['employer_building'] ? 'корп. ' . $data['employer_building'] : '',
+        $data['employer_flat'] ? 'кв. ' . $data['employer_flat'] : ''
+    ])));
 ?>
 
 <!DOCTYPE html>
@@ -100,9 +103,19 @@ $employerAddress = trim(implode(', ', array_filter([
 <div class="container">
 
 <!-- Навигация -->
-<a href="/patient/patient.php?id=<?= $data['patient_id'] ?>" class="back-link">
-    ← К карточке пациента
-</a>
+<div class="row">
+    <div style="margin-bottom: 20px;">
+    <a href="/patient/patient.php?id=<?= $data['patient_id'] ?>">
+        <button type="button">← К карте пациента</button>
+    </a>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+    <a href="/index.php">
+        <button type="button">← Регистратура</button>
+    </a>
+    </div>
+</div>
 
 <h2>Медицинский осмотр от <?= formatDate($data['exam_date']) ?></h2>
 
@@ -214,7 +227,7 @@ $employerAddress = trim(implode(', ', array_filter([
     
     <?php if ($data['psychiatric_exam']): ?>
     <div class="info-row">
-        <div class="info-label">Пункт психиатрического освидетельствования:</div>
+        <div class="info-label">Пункт психиатрического освидетельствования: </div>
         <div class="info-value"><?= e($data['psychiatric_factors']) ?></div>
     </div>
     <?php endif; ?>
@@ -276,10 +289,18 @@ $employerAddress = trim(implode(', ', array_filter([
     <div class="section-title">Печать документов</div>
     
     <div class="print-buttons">
+        <button class="print-btn" onclick="printDocument('pack_with_psy')">
+            Пакет документов с ОПО
+        </button>
+
+        <button class="print-btn" onclick="printDocument('pack_without_psy')">
+            Пакет документов без ОПО
+        </button>
+        
         <button class="print-btn" onclick="printDocument('ambulatory_card')">
             Амбулаторная карта
         </button>
-        
+
         <button class="print-btn" onclick="printDocument('contract')">
             Договор об оказании платных медицинских услуг
         </button>

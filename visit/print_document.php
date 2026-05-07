@@ -34,31 +34,19 @@ try {
     // Получаем все данные одним запросом через JOIN
     $stmt = $pdo->prepare("
         SELECT 
-            v.*,
-            p.medical_card_number,
-            p.last_name,
-            p.first_name,
-            p.middle_name,
-            p.birth_date,
-            p.gender,
-            p.document_type,
-            p.document_series,
-            p.document_number,
-            p.document_authority,
-            p.document_date,
-            p.snils,
-            p.phone_number,
-            p.email,
-            p.region,
-            p.district,
-            p.locality,
-            p.street,
-            p.house,
-            p.building,
-            p.flat
+        v.id AS visit_id,
+        v.*,
+        p.*,
+        STRING_AGG(DISTINCT hf.code, ', ') AS hazard_factors,
+        STRING_AGG(DISTINCT pf.name, ', ') AS psychiatric_factors_name
         FROM visits v
         JOIN patients p ON p.id = v.patient_id
+        LEFT JOIN visit_hazard_factors vhf ON vhf.visit_id = v.id
+        LEFT JOIN hazard_factors hf ON hf.id = vhf.hazard_factor_id
+        LEFT JOIN visit_psychiatric_factors vpf ON vpf.visit_id = v.id
+        LEFT JOIN psychiatric_factors pf ON pf.id = vpf.psychiatric_factor_id
         WHERE v.id = :id
+        GROUP BY v.id, p.id
     ");
     
     $stmt->execute(['id' => $visitId]);
@@ -77,7 +65,10 @@ try {
         'contract' => 'Договор об оказании платных медицинских услуг.docx',
         'medical_consent' => 'Согласие на медицинское вмешательство.docx',
         'personal_data_consent' => 'Согласние на ОПД.docx',
-        'psyhiatric_certificate' => 'Справка психиатра нарколога.docx'
+        'psyhiatric_certificate' => 'Справка психиатра нарколога.docx',
+        'medical_record_extract' => 'Выписка из медицинской карты.docx',
+        'pack_with_psy' => 'Пакет документов с психиатрическим освидетельствованием.docx',
+        'pack_without_psy' => 'Пакет документов без психиатрического освидетельствования.docx' 
     ];
 
     if (!isset($templates[$documentType])) {
@@ -120,6 +111,14 @@ try {
         'ad-hoc' => 'ВНЕОЧЕРЕДНОЙ'
     ];
     $examType = $examTypes[$data['exam_type']] ?? $data['exam_type'];
+
+    // Форматируем тип осмотра для вставки в заключение
+    $examTypesFormatted = [
+        'periodic' => 'периодического',
+        'preliminary' => 'предварительного',
+        'ad-hoc' => 'внеочередного'
+    ];
+    $examTypeFormatted = $examTypesFormatted[$data['exam_type']] ?? $data['exam_type'];
     
     // Форматируем адрес проживания
     $address = trim(implode(', ', array_filter([
@@ -152,6 +151,7 @@ try {
     $documentType = $documentTypes[$data['document_type']] ?? $data['document_type'];
     $document = trim($documentType . ' серия ' . $data['document_series'] . ' № ' . $data['document_number']);
     $documentAuthority = trim($data['document_authority'] . ' ' . $data['document_date']);
+    
     // ======================
     // 6. Заменяем плейсхолдеры
     // ======================
@@ -176,9 +176,10 @@ try {
     // Данные осмотра
     $templateProcessor->setValue('EXAM_DATE', $examDate);
     $templateProcessor->setValue('EXAM_TYPE', $examType);
+    $templateProcessor->setValue('EXAM_TYPE_FORMATTED', $examTypeFormatted);
     $templateProcessor->setValue('HAZARD_FACTORS', $data['hazard_factors'] ?? '');
     $templateProcessor->setValue('PSYCHIATRIC_EXAM', $data['psychiatric_exam'] ? 'Да' : 'Нет');
-    $templateProcessor->setValue('PSYCHIATRIC_FACTORS', $data['psychiatric_factors'] ?? '');
+    $templateProcessor->setValue('PSYCHIATRIC_FACTORS_NAME', $data['psychiatric_factors_name'] ?? '');
     
     // Данные работодателя
     $templateProcessor->setValue('ORGANIZATION_NAME', $data['organization_name'] ?? '');
@@ -186,6 +187,7 @@ try {
     $templateProcessor->setValue('POSITION', $data['position'] ?? '');
     $templateProcessor->setValue('INN', $data['inn'] ?? '');
     $templateProcessor->setValue('OGRN', $data['ogrn'] ?? '');
+    $templateProcessor->setValue('OKVD', $data['okvd'] ?? '');
     $templateProcessor->setValue('EMPLOYER_PHONE', $data['employer_phone'] ?? '');
     $templateProcessor->setValue('EMPLOYER_EMAIL', $data['employer_email'] ?? '');
     $templateProcessor->setValue('EMPLOYER_ADDRESS', $employerAddress);

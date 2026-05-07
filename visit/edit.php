@@ -61,7 +61,11 @@ $hazardFactorsString = implode(', ', $hazardCodes);
 
 <div class="container">
 
-<a href="/visit/visit.php?id=<?= $visitId ?>" class="back-link">← Назад к осмотру</a>
+<div style="margin-bottom: 20px;">
+    <a href="/visit/visit.php?id=<?= $visitId ?>">
+        <button type="button">← К осмотру (без сохранения)</button>
+    </a>
+    </div>
 
 <h2>Редактирование медицинского осмотра</h2>
 
@@ -192,6 +196,16 @@ $hazardFactorsString = implode(', ', $hazardCodes);
     required
 >
 </div>
+
+<div class="form-group">
+<label>ОКВЭД</label>
+<input 
+    type="text" 
+    name="okvd" 
+    value="<?= htmlspecialchars($visit['okvd']) ?>" 
+    required
+>
+</div>
 </div>
 
 <div class="row">
@@ -296,6 +310,26 @@ $hazardFactorsString = implode(', ', $hazardCodes);
 
 </form>
 </div>
+
+<script>
+    const need = document.getElementById('psychiatricExam');
+    const point = document.getElementById('psychiatricFactors');
+
+    function togglePsy() {
+        if (need.value === 'true') {
+            point.disabled = false;
+            point.parentElement.style.opacity = '1';
+        } else {
+            point.disabled = true;
+            point.value = '';
+            point.parentElement.style.opacity = '0.5';
+        }
+    }
+
+    need.addEventListener('change', togglePsy);
+
+    togglePsy(); // инициализация при загрузке
+</script>
 
 </body>
 </html>
