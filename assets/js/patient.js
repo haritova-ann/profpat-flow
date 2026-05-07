@@ -72,4 +72,28 @@ document.addEventListener('DOMContentLoaded', function () {
         e.target.value = formatted;
     });
 
+    function isRealDate(date) {
+    const parts = date.split('.');
+    if (parts.length !== 3) return false;
+
+    const [day, month, year] = parts.map(Number);
+
+    const d = new Date(year, month - 1, day);
+
+    return (
+        d.getFullYear() === year &&
+        d.getMonth() === month - 1 &&
+        d.getDate() === day
+    );
+    }
+
+    document.getElementById('birthDate').addEventListener('blur', function(e) {
+    const value = e.target.value;
+
+    if (value && !isRealDate(value)) {
+        e.target.setCustomValidity('Некорректная дата');
+    } else {
+        e.target.setCustomValidity('');
+    }
+});
 });

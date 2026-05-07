@@ -131,7 +131,7 @@ button:hover {
     background: #f5f5f5;
     padding: 10px;
     margin: 20px 0 15px 0;
-    border-left: 4px solid #3b4de9;
+    border-left: 4px solid #4a90e2;
     font-weight: bold;
     font-size: 1.1em;
 }
@@ -144,8 +144,8 @@ button:hover {
 }
 
 .print-btn {
-    background: #2196F3;
-    color: white;
+    background: #2170cd;
+    color: rgb(255, 255, 255);
     padding: 15px;
     border: none;
     border-radius: 4px;
@@ -159,7 +159,7 @@ button:hover {
 }
 
 .edit-btn {
-    background: #FF9800;
+    background: #4a90e2;
     color: white;
     padding: 10px 20px;
     border: none;
@@ -171,7 +171,7 @@ button:hover {
 }
 
 .edit-btn:hover {
-    background: #F57C00;
+    background: #4a90e2;
 }
 
 

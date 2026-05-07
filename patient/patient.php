@@ -79,7 +79,11 @@ function formatDate($date) {
 
 <div class="container">
 
-<a href="/index.php" class="back-link">← К поиску</a>
+<div style="margin-bottom: 20px;">
+<a href="/index.php">
+    <button type="button">← К поиску</button>
+</a>
+</div>
 
 <h2>Карточка пациента</h2>
 
@@ -87,6 +91,14 @@ function formatDate($date) {
      БЛОК 1: Пациент
 ====================== -->
 <div class="card">
+
+        <div style="margin-bottom: 20px;">
+    <a href="/patient/edit.php?id=<?= $patient['id'] ?>">
+        <button type="button">Редактировать
+        </button>
+    </a>
+    </div>
+
    <div class="section-title">Данные пациента</div>
 
     <div class="info-row">
@@ -150,13 +162,14 @@ function formatDate($date) {
      БЛОК 2: Визиты
 ====================== -->
 <div class="card">
-   <div class="section-title">История медцинских осмотров</div>
-
-<div style="margin-bottom: 20px;">
-    <a href="/visit/create.php?patient_id=<?= $patient['id'] ?>" class="edit-btn">
-        Добавить осмотр
+ <div style="margin-bottom: 20px;">
+    <a href="/visit/create.php?patient_id=<?= $patient['id'] ?>">
+        <button type="button">Добавить осмотр
+        </button>
     </a>
 </div>
+
+   <div class="section-title">История медицинских осмотров</div>
 
 <?php if (empty($visits)): ?>
     <p>Осмотров пока нет</p>

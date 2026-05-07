@@ -33,6 +33,12 @@ $patients = $stmt->fetchAll();
 <div class="container">
 <h2>Пациенты</h2>
 
+<div style="margin-bottom: 20px;">
+<a href="/index.php">
+    <button type="button">← Регистратура</button>
+</a>
+</div>
+
 <input 
     type="text" 
     id="searchInput"

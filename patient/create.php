@@ -2,13 +2,20 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>Редактирование пациента</title>
+<title>Создание пациента</title>
 <link rel="stylesheet" href="/assets/css/forms.css">
 </head>
 
 <body>
 
 <div class="container">
+
+<div style="margin-bottom: 20px;">
+<a href="/index.php">
+    <button type="button">← Регистратура</button>
+</a>
+</div>
+
 <h2>Пациент</h2>
 
 <form action="save.php" method="POST">
@@ -95,12 +102,12 @@
 
 <div class="form-group">
 <label>СНИЛС</label>
-<input type="text" name="snils" id="snils" placeholder="___ ___ ___ __" required>
+<input type="text" name="snils" id="snils" placeholder="___ ___ ___ __" maxlength="14" inputmode="numeric" required>
 </div>
 
 <div class="form-group">
 <label>Телефон</label>
-<input type="text" name="phone_number" id="phoneNumber" placeholder="+7 ___ ___ __ __">
+<input type="tel" name="phone_number" id="phoneNumber" placeholder="+7 ___ ___ __ __">
 </div>
 
 <div class="form-group">
