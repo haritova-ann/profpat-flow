@@ -20,6 +20,7 @@ if ($search) {
                 p.first_name,
                 p.middle_name,
                 p.birth_date,
+                p.snils,
                 MAX(v.exam_date) AS last_exam_date
             FROM patients p
             LEFT JOIN visits v ON v.patient_id = p.id
@@ -52,6 +53,7 @@ if ($search) {
                 p.first_name,
                 p.middle_name,
                 p.birth_date,
+                p.snils,
                 MAX(v.exam_date) AS last_exam_date
             FROM patients p
             LEFT JOIN visits v ON v.patient_id = p.id
@@ -77,6 +79,7 @@ $todaySql = "
         p.first_name,
         p.middle_name,
         p.birth_date,
+        p.snils,
         v.exam_date
     FROM visits v
     JOIN patients p ON p.id = v.patient_id
@@ -132,6 +135,7 @@ $todayVisits = $pdo->query($todaySql)->fetchAll();
                     <th>№ карты</th>
                     <th>ФИО</th>
                     <th>Дата рождения</th>
+                    <th>СНИЛС</th>
                     <th>Последний осмотр</th>
                 </tr>
             </thead>
@@ -149,6 +153,10 @@ $todayVisits = $pdo->query($todaySql)->fetchAll();
 
                     <td>
                         <?= $p['birth_date'] ? date('d.m.Y', strtotime($p['birth_date'])) : '' ?>
+                    </td>
+
+                    <td>
+                        <?= htmlspecialchars($p['snils']) ?>
                     </td>
 
                     <td>
@@ -208,6 +216,7 @@ $todayVisits = $pdo->query($todaySql)->fetchAll();
         <tr>
             <th>ФИО</th>
             <th>Дата рождения</th>
+            <th>СНИЛС</th>
             <th>Дата осмотра</th>
         </tr>
     </thead>
@@ -224,6 +233,10 @@ $todayVisits = $pdo->query($todaySql)->fetchAll();
 
             <td>
                 <?= $v['birth_date'] ? date('d.m.Y', strtotime($v['birth_date'])) : '' ?>
+            </td>
+
+            <td>
+                <?= htmlspecialchars($v['snils']) ?>
             </td>
 
             <td>
