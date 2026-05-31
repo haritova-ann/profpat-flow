@@ -10,7 +10,7 @@
  * - type: тип документа (ambulatory_card, contract, medical_consent, personal_data_consent)
  */
 
-require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../includes/bootstrap.php';
 
 // Подключаем автозагрузчик Composer, который загрузит PHPWord
 require_once __DIR__ . '/../vendor/autoload.php';
@@ -85,24 +85,13 @@ try {
     // 4. Загружаем шаблон
     // ======================
     // TemplateProcessor - класс PHPWord для работы с шаблонами
-    // Он умеет искать и заменять плейсхолдеры вида ${ИМЯ_ПЕРЕМЕННОЙ}
+    // Ищет и заменяет плейсхолдеры вида ${ИМЯ_ПЕРЕМЕННОЙ}
     $templateProcessor = new TemplateProcessor($templatePath);
 
     // ======================
     // 5. Подготавливаем данные для подстановки
     // ======================
-    
-    // Форматируем ФИО
-    $fullName = trim($data['last_name'] . ' ' . $data['first_name'] . ' ' . $data['middle_name']);
-    
-    // Форматируем дату рождения
-    $birthDate = date('d.m.Y', strtotime($data['birth_date']));
-    
-    // Форматируем дату осмотра
-    $examDate = date('d.m.Y', strtotime($data['exam_date']));
-    
-    // Форматируем пол
-    $gender = $data['gender'] === 'male' ? 'Мужской' : 'Женский';
+
     
     // Форматируем тип осмотра
     $examTypes = [
@@ -112,6 +101,14 @@ try {
     ];
     $examType = $examTypes[$data['exam_type']] ?? $data['exam_type'];
 
+    // Форматируем тип осмотра для вставки в шпаку заключения
+    $examTypesFormattedForConclusion = [
+        'periodic' => 'ПЕРИОДИЧЕСКОГО',
+        'preliminary' => 'ПРЕДВАРИТЕЛЬНОГО',
+        'ad-hoc' => 'ВНЕОЧЕРЕДНОГО'
+    ];
+    $examTypeFormattedForConclusion = $examTypesFormattedForConclusion[$data['exam_type']] ?? $data['exam_type'];
+
     // Форматируем тип осмотра для вставки в заключение
     $examTypesFormatted = [
         'periodic' => 'периодического',
@@ -120,36 +117,6 @@ try {
     ];
     $examTypeFormatted = $examTypesFormatted[$data['exam_type']] ?? $data['exam_type'];
     
-    // Форматируем адрес проживания
-    $address = trim(implode(', ', array_filter([
-        $data['region'],
-        $data['district'],
-        $data['locality'],
-        $data['street'],
-        $data['house'] ? 'д. ' . $data['house'] : '',
-        $data['building'] ? 'корп. ' . $data['building'] : '',
-        $data['flat'] ? 'кв. ' . $data['flat'] : ''
-    ])));
-    
-    // Форматируем адрес работодателя
-    $employerAddress = trim(implode(', ', array_filter([
-        $data['employer_region'],
-        $data['employer_district'],
-        $data['employer_locality'],
-        $data['employer_street'],
-        $data['employer_house'] ? 'д. ' . $data['employer_house'] : '',
-        $data['employer_building'] ? 'корп. ' . $data['employer_building'] : '',
-        $data['employer_flat'] ? 'кв. ' . $data['employer_flat'] : ''
-    ])));
-    
-    // Форматируем документ
-    $documentTypes = [
-        'passport' => 'Паспорт РФ',
-        'passport_foreign' => 'Паспорт иностранного гражданина',
-        'residence_permit' => 'ВНЖ'
-    ];
-    $documentType = $documentTypes[$data['document_type']] ?? $data['document_type'];
-    $document = trim($documentType . ' серия ' . $data['document_series'] . ' № ' . $data['document_number']);
     $documentAuthority = trim($data['document_authority'] . ' ' . $data['document_date']);
     
     // ======================
@@ -160,23 +127,24 @@ try {
     
     // Данные пациента
     $templateProcessor->setValue('CARD_NUMBER', $data['medical_card_number'] ?? '');
-    $templateProcessor->setValue('FULL_NAME', $fullName);
+    $templateProcessor->setValue('FULL_NAME', formatFullName($data) ?? '');
     $templateProcessor->setValue('LAST_NAME', $data['last_name'] ?? '');
     $templateProcessor->setValue('FIRST_NAME', $data['first_name'] ?? '');
     $templateProcessor->setValue('MIDDLE_NAME', $data['middle_name'] ?? '');
-    $templateProcessor->setValue('BIRTH_DATE', $birthDate);
-    $templateProcessor->setValue('GENDER', $gender);
+    $templateProcessor->setValue('BIRTH_DATE', formatDate($data['birth_date']) ?? '');
+    $templateProcessor->setValue('GENDER', formatGender($data) ?? '');
     $templateProcessor->setValue('SNILS', $data['snils'] ?? '');
-    $templateProcessor->setValue('DOCUMENT', $document);
+    $templateProcessor->setValue('DOCUMENT', formatIdentityDocument($data) ?? '');
     $templateProcessor->setValue('DOCUMENT_AUTHORITY', $documentAuthority);
     $templateProcessor->setValue('PHONE', $data['phone_number'] ?? '');
     $templateProcessor->setValue('EMAIL', $data['email'] ?? '');
-    $templateProcessor->setValue('ADDRESS', $address);
+    $templateProcessor->setValue('ADDRESS',  formatAddress($data));
     
     // Данные осмотра
-    $templateProcessor->setValue('EXAM_DATE', $examDate);
+    $templateProcessor->setValue('EXAM_DATE', formatDate($data['exam_date']) ?? '');
     $templateProcessor->setValue('EXAM_TYPE', $examType);
     $templateProcessor->setValue('EXAM_TYPE_FORMATTED', $examTypeFormatted);
+    $templateProcessor->setValue('EXAM_TYPE_CONCL', $examTypeFormattedForConclusion);
     $templateProcessor->setValue('HAZARD_FACTORS', $data['hazard_factors'] ?? '');
     $templateProcessor->setValue('PSYCHIATRIC_EXAM', $data['psychiatric_exam'] ? 'Да' : 'Нет');
     $templateProcessor->setValue('PSYCHIATRIC_FACTORS_NAME', $data['psychiatric_factors_name'] ?? '');
@@ -190,7 +158,7 @@ try {
     $templateProcessor->setValue('OKVD', $data['okvd'] ?? '');
     $templateProcessor->setValue('EMPLOYER_PHONE', $data['employer_phone'] ?? '');
     $templateProcessor->setValue('EMPLOYER_EMAIL', $data['employer_email'] ?? '');
-    $templateProcessor->setValue('EMPLOYER_ADDRESS', $employerAddress);
+    $templateProcessor->setValue('EMPLOYER_ADDRESS', formatEmployerAddress($data));
 
     // ======================
     // 7. Генерируем имя файла

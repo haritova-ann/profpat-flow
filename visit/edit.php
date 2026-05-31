@@ -6,7 +6,10 @@
  * Загружает существующие данные и отправляет изменения в update.php
  */
 
-require __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../includes/bootstrap.php';
+
+// Контекст страницы для header (активные пункты, условия отображения)
+$page = 'visit';
 
 // Получаем ID визита
 $visitId = $_GET['id'] ?? null;
@@ -47,46 +50,53 @@ $hazardCodes = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
 // Объединяем коды в строку через запятую для отображения в поле
 $hazardFactorsString = implode(', ', $hazardCodes);
+
+// ======================
+// Настраиваем header
+// ======================
+$pageTitle = 'Редактирование осмотра';
+
+$topbarLeft = [
+    [
+        'label' => '← Медицинский осмотр',
+        'href' => '/visit/visit.php?id=' . $visitId
+    ],
+    [
+        'type' => 'submit',
+        'label' => 'Сохранить',
+        'form' => 'visit-form',
+        'class' => 'topbar-primary'
+    ]
+
+];
+
+require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<title>Редактирование медосмотра</title>
-<link rel="stylesheet" href="/assets/css/forms.css">
-</head>
-
-<body>
-
+<!-- =========================
+    Основной контент
+========================= -->
 <div class="container">
-
-<div style="margin-bottom: 20px;">
-    <a href="/visit/visit.php?id=<?= $visitId ?>">
-        <button type="button">← К осмотру (без сохранения)</button>
-    </a>
-    </div>
-
-<h2>Редактирование медицинского осмотра</h2>
+<h2>Редактирование осмотра</h2>
 
 <div class="card" style="margin-bottom: 20px;">
     <strong>Пациент:</strong>
-    <?= htmlspecialchars($visit['last_name']) ?>
-    <?= htmlspecialchars($visit['first_name']) ?>
-    <?= htmlspecialchars($visit['middle_name']) ?>
+    <?= e($visit['last_name']) ?>
+    <?= e($visit['first_name']) ?>
+    <?= e($visit['middle_name']) ?>
     <br>
 
     <strong>№ карты:</strong>
-    <?= htmlspecialchars($visit['medical_card_number']) ?>
+    <?= e($visit['medical_card_number']) ?>
 </div>
 
 <!-- 
     Форма отправляет данные в update.php
     Используем скрытое поле visit_id для передачи ID осмотра
 -->
-<form action="update.php" method="POST">
-<input type="hidden" name="visit_id" value="<?= htmlspecialchars($visitId) ?>">
-<input type="hidden" name="patient_id" value="<?= htmlspecialchars($visit['patient_id']) ?>">
+<form action="update.php" id="visit-form" method="POST">
+<input type="hidden" name="visit_id" value="<?= e($visitId) ?>">
+<input type="hidden" name="patient_id" value="<?= e($visit['patient_id']) ?>">
 
 <div class="row">
 <div class="form-group">
@@ -94,7 +104,7 @@ $hazardFactorsString = implode(', ', $hazardCodes);
 <input 
     type="text" 
     name="exam_date" 
-    value="<?= htmlspecialchars(date('d.m.Y', strtotime($visit['exam_date']))) ?>" 
+    value="<?= e(formatDate($visit['exam_date'])) ?>" 
     readonly
 >
 </div>
@@ -120,7 +130,7 @@ $hazardFactorsString = implode(', ', $hazardCodes);
 <input 
     type="text" 
     name="organization_name" 
-    value="<?= htmlspecialchars($visit['organization_name']) ?>" 
+    value="<?= e($visit['organization_name']) ?>" 
     required
 >
 </div>
@@ -130,7 +140,7 @@ $hazardFactorsString = implode(', ', $hazardCodes);
 <input 
     type="text" 
     name="organization_department" 
-    value="<?= htmlspecialchars($visit['organization_department']) ?>"
+    value="<?= e($visit['organization_department']) ?>"
 >
 </div>
 
@@ -139,7 +149,7 @@ $hazardFactorsString = implode(', ', $hazardCodes);
 <input 
     type="text" 
     name="position" 
-    value="<?= htmlspecialchars($visit['position']) ?>"
+    value="<?= e($visit['position']) ?>"
 >
 </div>
 
@@ -148,7 +158,7 @@ $hazardFactorsString = implode(', ', $hazardCodes);
 <input 
     type="text" 
     name="hazard_factors" 
-    value="<?= htmlspecialchars($hazardFactorsString) ?>" 
+    value="<?= e($hazardFactorsString) ?>" 
     required
 >
 </div>
@@ -169,7 +179,7 @@ $hazardFactorsString = implode(', ', $hazardCodes);
         type="text" 
         name="psychiatric_factors" 
         id="psychiatricFactors"
-        value="<?= htmlspecialchars($visit['psychiatric_factors']) ?>"
+        value="<?= e($visit['psychiatric_factors']) ?>"
     >
 </div>
                              
@@ -182,7 +192,7 @@ $hazardFactorsString = implode(', ', $hazardCodes);
 <input 
     type="text" 
     name="inn" 
-    value="<?= htmlspecialchars($visit['inn']) ?>" 
+    value="<?= e($visit['inn']) ?>" 
     required
 >
 </div>
@@ -192,7 +202,7 @@ $hazardFactorsString = implode(', ', $hazardCodes);
 <input 
     type="text" 
     name="ogrn" 
-    value="<?= htmlspecialchars($visit['ogrn']) ?>" 
+    value="<?= e($visit['ogrn']) ?>" 
     required
 >
 </div>
@@ -202,7 +212,7 @@ $hazardFactorsString = implode(', ', $hazardCodes);
 <input 
     type="text" 
     name="okvd" 
-    value="<?= htmlspecialchars($visit['okvd']) ?>" 
+    value="<?= e($visit['okvd']) ?>" 
     required
 >
 </div>
@@ -215,7 +225,7 @@ $hazardFactorsString = implode(', ', $hazardCodes);
 <input 
     type="text" 
     name="employer_phone" 
-    value="<?= htmlspecialchars($visit['employer_phone']) ?>" 
+    value="<?= e($visit['employer_phone']) ?>" 
     placeholder="+7 ___ ___ __ __"
 >
 </div>
@@ -225,7 +235,7 @@ $hazardFactorsString = implode(', ', $hazardCodes);
 <input 
     type="email" 
     name="employer_email" 
-    value="<?= htmlspecialchars($visit['employer_email']) ?>" 
+    value="<?= e($visit['employer_email']) ?>" 
     placeholder="example@mail.com"
 >
 </div>
@@ -239,7 +249,7 @@ $hazardFactorsString = implode(', ', $hazardCodes);
 <input 
     type="text" 
     name="employer_region" 
-    value="<?= htmlspecialchars($visit['employer_region']) ?>" 
+    value="<?= e($visit['employer_region']) ?>" 
     required
 >
 </div>
@@ -249,7 +259,7 @@ $hazardFactorsString = implode(', ', $hazardCodes);
 <input 
     type="text" 
     name="employer_district" 
-    value="<?= htmlspecialchars($visit['employer_district']) ?>"
+    value="<?= e($visit['employer_district']) ?>"
 >
 </div>
 
@@ -258,7 +268,7 @@ $hazardFactorsString = implode(', ', $hazardCodes);
 <input 
     type="text" 
     name="employer_locality" 
-    value="<?= htmlspecialchars($visit['employer_locality']) ?>" 
+    value="<?= e($visit['employer_locality']) ?>" 
     required
 >
 </div>
@@ -270,7 +280,7 @@ $hazardFactorsString = implode(', ', $hazardCodes);
 <input 
     type="text" 
     name="employer_street" 
-    value="<?= htmlspecialchars($visit['employer_street']) ?>" 
+    value="<?= e($visit['employer_street']) ?>" 
     required
 >
 </div>
@@ -280,7 +290,7 @@ $hazardFactorsString = implode(', ', $hazardCodes);
 <input 
     type="text" 
     name="employer_house" 
-    value="<?= htmlspecialchars($visit['employer_house']) ?>" 
+    value="<?= e($visit['employer_house']) ?>" 
     required
 >
 </div>
@@ -292,7 +302,7 @@ $hazardFactorsString = implode(', ', $hazardCodes);
 <input 
     type="text" 
     name="employer_building" 
-    value="<?= htmlspecialchars($visit['employer_building']) ?>"
+    value="<?= e($visit['employer_building']) ?>"
 >
 </div>
 
@@ -301,7 +311,7 @@ $hazardFactorsString = implode(', ', $hazardCodes);
 <input 
     type="text" 
     name="employer_flat" 
-    value="<?= htmlspecialchars($visit['employer_flat']) ?>"
+    value="<?= e($visit['employer_flat']) ?>"
 >
 </div>
 </div>
@@ -331,5 +341,6 @@ $hazardFactorsString = implode(', ', $hazardCodes);
     togglePsy(); // инициализация при загрузке
 </script>
 
-</body>
-</html>
+<?php
+
+require_once __DIR__ . '/../includes/footer.php';

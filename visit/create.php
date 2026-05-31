@@ -1,5 +1,9 @@
 <?php
-require __DIR__ . '/../config/db.php';
+
+require_once __DIR__ . '/../includes/bootstrap.php';
+
+// Контекст страницы для header (активные пункты, условия отображения)
+$page = 'visit';
 
 $patientId = $_GET['patient_id'] ?? null;
 
@@ -14,34 +18,64 @@ $patient = $stmt->fetch();
 if (!$patient) {
     die('Пациент не найден');
 }
+
+// ======================
+// Настраиваем header
+// ======================
+$pageTitle = 'Новый осмотр';
+
+$topbarLeft = [
+    [
+        'label' => '← Карта пациента',
+        'href' => '/patient/patient.php?id=' . $patientId
+    ],
+    [
+        'type' => 'button',
+        'label' => 'Заполнить из предыдущего осмотра',
+        'data-action' => 'fill-from-previous-visit',
+        'class' => 'topbar-secondary'
+    ],
+    [
+        'type' => 'submit',
+        'label' => 'Сохранить',
+        'form' => 'visit-form',
+        'class' => 'topbar-primary'
+    ]
+
+];
+
+// Получаем последний визит пациента
+$stmt = $pdo->prepare("
+    SELECT * FROM visits 
+    WHERE patient_id = :patient_id 
+    ORDER BY exam_date DESC 
+    LIMIT 1
+");
+$stmt->execute(['patient_id' => $patientId]);
+$lastVisit = $stmt->fetch();
+
+require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<title>Медицинский осмотр</title>
-<link rel="stylesheet" href="/assets/css/forms.css">
-</head>
-
-<body>
-
+<!-- =========================
+    Основной контент
+========================= -->
 <div class="container">
-<h2>Медицинский осмотр</h2>
+<h2>Новый медицинский осмотр</h2>
 
 <div class="card" style="margin-bottom: 20px;">
     <strong>Пациент:</strong>
-    <?= htmlspecialchars($patient['last_name']) ?>
-    <?= htmlspecialchars($patient['first_name']) ?>
-    <?= htmlspecialchars($patient['middle_name']) ?>
+    <?= e($patient['last_name']) ?>
+    <?= e($patient['first_name']) ?>
+    <?= e($patient['middle_name']) ?>
     <br>
 
     <strong>№ карты:</strong>
-    <?= htmlspecialchars($patient['medical_card_number']) ?>
+    <?= e($patient['medical_card_number']) ?>
 </div>
 
-<form action="save.php" method="POST">
-<input type="hidden" name="patient_id" value="<?= htmlspecialchars($patientId) ?>">
+<form action="save.php" id="visit-form" method="POST">
+<input type="hidden" name="patient_id" value="<?= e($patientId) ?>">
 <div class="row">
 <div class="form-group">
 <label>Дата медицинского осмотра</label>
@@ -58,15 +92,28 @@ if (!$patient) {
 </div>
 </div>
 
-<div class="form-group">
-    <label>Место работы, учебы</label>
+<div class="form-group employer-select">
 
-    <input type="text" id="employerSearch" placeholder="Начните вводить название..." autocomplete="off">
+    <label for="employerSearch">
+        Место работы, учебы
+    </label>
+
+    <div class="dropdown-wrapper">
+
+        <input
+            type="text"
+            id="employerSearch"
+            placeholder="Начните вводить название..."
+            autocomplete="off"
+        >
+
+        <div id="employerDropdown" class="dropdown"></div>
+
+    </div>
 
     <input type="hidden" name="employer_id" id="employerId">
     <input type="hidden" name="organization_name" id="organizationName">
 
-    <div id="employerDropdown" class="dropdown"></div>
 </div>
 
 <div class="form-group">
@@ -105,12 +152,12 @@ if (!$patient) {
 
 <div class="form-group">
 <label>ИНН</label>
-<input type="text" name="inn" id="inn" required>
+<input type="text" name="inn" id="inn" maxlength="12" >
 </div>
 
 <div class="form-group">
 <label>ОГРН (ОГРНИП)</label>
-<input type="text" name="ogrn" id="ogrn" required>
+<input type="text" name="ogrn" id="ogrn" maxlength="15" >
 </div>
 
 <div class="form-group">
@@ -137,7 +184,7 @@ if (!$patient) {
 <div class="row">
 <div class="form-group">
 <label>Субъект РФ</label>
-<input type="text" name="employer_region" id="region" value="Красноярский край" required>
+<input type="text" name="employer_region" id="region" value="Красноярский край">
 </div>
 
 <div class="form-group">
@@ -147,19 +194,19 @@ if (!$patient) {
 
 <div class="form-group">
 <label>Населенный пункт</label>
-<input type="text" name="employer_locality" id="locality" value="г. Красноярск" required>
+<input type="text" name="employer_locality" id="locality" value="г. Красноярск">
 </div>
 </div>
 
 <div class="row">
 <div class="form-group">
 <label>Улица</label>
-<input type="text" name="employer_street" id="street" required>
+<input type="text" name="employer_street" id="street">
 </div>
 
 <div class="form-group">
 <label>Дом</label>
-<input type="text" name="employer_house" id="house" required>
+<input type="text" name="employer_house" id="house">
 </div>
 </div>
 
@@ -175,12 +222,10 @@ if (!$patient) {
 </div>
 </div>
 
-<button type="submit">Сохранить</button>
 
 </form>
 </div>
 
-<script src="/assets/js/visit.js"></script>
+<?php
 
-</body>
-</html>
+require_once __DIR__ . '/../includes/footer.php';
