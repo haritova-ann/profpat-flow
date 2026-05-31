@@ -1,5 +1,6 @@
 <?php
-require __DIR__ . '/config/db.php';
+
+require_once __DIR__ . '/includes/bootstrap.php';
 
 $search = $_GET['search'] ?? '';
 $patients = [];
@@ -88,37 +89,41 @@ $todaySql = "
 ";
 
 $todayVisits = $pdo->query($todaySql)->fetchAll();
+
+// ======================
+// Настраиваем header
+// ======================
+$pageTitle = 'Регистратура';
+
+$topbarLeft = [
+    [
+        'label' => 'Список пациентов',
+        'href' => 'patient/patients.php'
+    ],
+    [
+        'label' => 'Список организаций',
+        'href' => 'employers/employers.php'
+    ]
+];
+
+require_once __DIR__ . '/includes/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<title>Регистратура</title>
-<link rel="stylesheet" href="/assets/css/forms.css">
-</head>
-
-<body>
-
+<!-- =========================
+    Основной контент
+========================= -->
 <div class="container">
 <h2>Регистратура</h2>
 
-<div style="margin-bottom: 20px;">
-<a href="patient/patients.php">
-    <button type="button">Список всех пациентов</button>
-</a>
-</div>
-
 <!-- ПОИСК -->
-<form method="GET" class="form-group">
+<form method="GET" class="search-form">
     <input 
         type="text" 
         name="search" 
         placeholder="Введите: № карты, фамилию или полное ФИО"
-        value="<?= htmlspecialchars($search) ?>"
-        style="width: 400px;"
+        value="<?= e($search) ?>"
     >
-    <div style="margin-top: 20px;">
+    <div>
         <button type="submit">Найти</button>
     </div>
 </form>
@@ -143,26 +148,24 @@ $todayVisits = $pdo->query($todaySql)->fetchAll();
 
             <?php foreach ($patients as $p): ?>
                 <tr onclick="window.location='/patient/patient.php?id=<?= $p['id'] ?>'" style="cursor:pointer;">
-                    <td><?= htmlspecialchars($p['medical_card_number']) ?></td>
+                    <td><?= e($p['medical_card_number']) ?></td>
 
                     <td>
-                        <?= htmlspecialchars($p['last_name']) ?>
-                        <?= htmlspecialchars($p['first_name']) ?>
-                        <?= htmlspecialchars($p['middle_name']) ?>
+                        <?= e($p['last_name']) ?>
+                        <?= e($p['first_name']) ?>
+                        <?= e($p['middle_name']) ?>
                     </td>
 
                     <td>
-                        <?= $p['birth_date'] ? date('d.m.Y', strtotime($p['birth_date'])) : '' ?>
+                        <?= formatDate($p['birth_date']) ?>
                     </td>
 
                     <td>
-                        <?= htmlspecialchars($p['snils']) ?>
+                        <?= e($p['snils']) ?>
                     </td>
 
                     <td>
-                        <?= $p['last_exam_date'] 
-                            ? date('d.m.Y', strtotime($p['last_exam_date'])) 
-                            : '—' ?>
+                        <?= formatDate($p['last_exam_date']) ?>
                     </td>
                 </tr>
             <?php endforeach; ?>
@@ -172,7 +175,10 @@ $todayVisits = $pdo->query($todaySql)->fetchAll();
 
         <?php
         // Подготовка данных для создания нового пациента
-        $parts = explode(' ', trim($search));
+        $parts = array_map(
+            'normalizeName',
+            preg_split('/\s+/', trim($search))
+        );
         $query = http_build_query([
             'last_name' => $parts[0] ?? '',
             'first_name' => $parts[1] ?? '',
@@ -192,7 +198,10 @@ $todayVisits = $pdo->query($todaySql)->fetchAll();
 
         <?php
         // префилл ФИО
-        $parts = explode(' ', trim($search));
+        $parts = array_map(
+            'normalizeName',
+            preg_split('/\s+/', trim($search))
+        );
         $query = http_build_query([
             'last_name' => $parts[0] ?? '',
             'first_name' => $parts[1] ?? '',
@@ -209,7 +218,7 @@ $todayVisits = $pdo->query($todaySql)->fetchAll();
 <?php endif; ?>
 
 <!-- ОСМОТРЫ ЗА СЕГОДНЯ -->
-<h3 style="margin-top:30px;">Осмотры за сегодня</h3>
+<h3>Осмотры за сегодня</h3>
 
 <table class="patients-table">
     <thead>
@@ -226,21 +235,21 @@ $todayVisits = $pdo->query($todaySql)->fetchAll();
     <?php foreach ($todayVisits as $v): ?>
         <tr onclick="window.location='/visit/visit.php?id=<?= $v['visit_id'] ?>'" style="cursor:pointer;">
             <td>
-                <?= htmlspecialchars($v['last_name']) ?>
-                <?= htmlspecialchars($v['first_name']) ?>
-                <?= htmlspecialchars($v['middle_name']) ?>
+                <?= e($v['last_name']) ?>
+                <?= e($v['first_name']) ?>
+                <?= e($v['middle_name']) ?>
             </td>
 
             <td>
-                <?= $v['birth_date'] ? date('d.m.Y', strtotime($v['birth_date'])) : '' ?>
+                <?= formatDate($v['birth_date']) ?>
             </td>
 
             <td>
-                <?= htmlspecialchars($v['snils']) ?>
+                <?= e($v['snils']) ?>
             </td>
 
             <td>
-                <?= date('d.m.Y', strtotime($v['exam_date'])) ?>
+                <?= formatDate($v['exam_date']) ?>
             </td>
         </tr>
     <?php endforeach; ?>
@@ -250,5 +259,6 @@ $todayVisits = $pdo->query($todaySql)->fetchAll();
 
 </div>
 
-</body>
-</html>
+<?php
+
+require_once __DIR__ . '/includes/footer.php';
