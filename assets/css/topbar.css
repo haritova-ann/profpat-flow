@@ -1,0 +1,157 @@
+/* =========================
+ВЕРХНЯЯ ПАНЕЛЬ
+========================= */
+.topbar {
+position: sticky;
+top: 0;
+z-index: 100;
+background: white;
+border-bottom: 1px solid #dfe5ec;
+padding: 14px 24px;
+display: flex;
+justify-content: space-between;
+align-items: center;
+box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+}
+
+.topbar-left,
+.topbar-right {
+display: flex;
+gap: 10px;
+}
+
+/* Обычная кнопка */
+.topbar-btn {
+display: inline-block;
+border: none;
+background: #4a90e2;
+padding: 10px 14px;
+border-radius: 10px;
+cursor: pointer;
+font-size: 14px;
+text-decoration: none;
+color: white;
+}
+
+/* Кнопка при наведении */
+.topbar-btn:hover {
+    background: #357abd;
+}
+
+/* Акцентная кнопка */
+.topbar-primary {
+display: inline-block;
+border: none;
+background: #2563eb;
+padding: 10px 14px;
+border-radius: 10px;
+cursor: pointer;
+font-size: 14px;
+text-decoration: none;
+color: white;
+}
+
+/* Акцентная кнопка при наведении*/ 
+.topbar-primary:hover {
+background: #1d4ed8;
+border-color: #1d4ed8;
+}
+
+/* Отображение пользователя */
+.user-badge {
+    display: flex;
+    align-items: center;
+
+    padding: 10px 14px;
+
+    background: #f3f6fb;
+    border-radius: 10px;
+
+    font-size: 14px;
+    color: #334155;
+}
+
+/* =========================
+USER MENU
+========================= */
+
+.user-menu {
+    position: relative;
+}
+
+.user-menu-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    padding: 10px 14px;
+
+    background: #f3f6fb;
+    border: 1px solid #dbe3ef;
+    border-radius: 12px;
+
+    cursor: pointer;
+}
+
+.user-menu-btn:hover {
+    background: #eef3fb;
+}
+
+.user-menu-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.user-menu-role {
+    font-size: 12px;
+    color: #64748b;
+}
+
+.user-menu-arrow {
+    color: #64748b;
+    font-size: 12px;
+}
+
+.user-dropdown {
+    position: absolute;
+
+    top: calc(100% + 8px);
+    right: 0;
+
+    min-width: 180px;
+
+    background: white;
+
+    border: 1px solid #dbe3ef;
+    border-radius: 12px;
+
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+
+    overflow: hidden;
+
+    display: none;
+
+    z-index: 200;
+}
+
+.user-dropdown a {
+    display: block;
+
+    padding: 12px 14px;
+
+    text-decoration: none;
+
+    color: #334155;
+
+    font-size: 14px;
+}
+
+.user-dropdown a:hover {
+    background: #f8fbff;
+}
+
+/* показать меню */
+.user-menu.open .user-dropdown {
+    display: block;
+}

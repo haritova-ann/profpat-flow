@@ -1,4 +1,74 @@
 document.addEventListener('DOMContentLoaded', function () {
+    // Кнопка заполнения из предыдущего визита
+    const fillFromPreviousBtn = document.querySelector('button[data-action="fill-from-previous-visit"]');
+    console.log('Кнопка найдена:', fillFromPreviousBtn); // Отладочный вывод
+
+    if (fillFromPreviousBtn) {
+        fillFromPreviousBtn.addEventListener('click', async function(event) {
+            console.log('Кнопка нажата'); // Отладочный вывод
+            event.preventDefault(); // Предотвращаем стандартное поведение кнопки
+            try {
+                const patientId = document.querySelector('input[name="patient_id"]').value;
+                console.log('ID пациента:', patientId); // Отладочный вывод
+
+                const response = await fetch(`/api/last_visit.php?patient_id=${patientId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                console.log('Ответ сервера:', response); // Отладочный вывод
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('Результат:', result); // Отладочный вывод
+
+                if (result.error) {
+                    alert(result.error);
+                    return;
+                }
+
+                if (result) {
+                    // Заполнение полей формы
+                    document.getElementById('examType').value = result.exam_type || 'periodic';
+                    document.getElementById('employerSearch').value = result.organization_name || '';
+                    document.getElementById('organizationName').value = result.organization_name || '';
+                    document.getElementById('employerId').value = result.employer_id || '';
+                    document.getElementById('organizationDepartment').value = result.organization_department || '';
+                    document.getElementById('position').value = result.position || '';
+                    document.getElementById('hazardFactors').value = result.hazard_factors || '';
+                    document.getElementById('psychiatricExam').value = result.psychiatric_exam || 'false';
+                    document.getElementById('psychiatricFactors').value = result.psychiatric_factors || '';
+                    document.getElementById('inn').value = result.inn || '';
+                    document.getElementById('ogrn').value = result.ogrn || '';
+                    document.getElementById('okvd').value = result.okvd || '';
+                    document.getElementById('phoneNumber').value = result.employer_phone || '';
+                    document.getElementById('email').value = result.employer_email || '';
+                    document.getElementById('region').value = result.employer_region || 'Красноярский край';
+                    document.getElementById('district').value = result.employer_district || '';
+                    document.getElementById('locality').value = result.employer_locality || 'г. Красноярск';
+                    document.getElementById('street').value = result.employer_street || '';
+                    document.getElementById('house').value = result.employer_house || '';
+                    document.getElementById('building').value = result.employer_building || '';
+                    document.getElementById('flat').value = result.employer_flat || '';
+
+                    // Вызываем обработчики для динамических элементов
+                    document.getElementById('psychiatricExam').dispatchEvent(new Event('change'));
+                } else {
+                    alert('Предыдущие визиты не найдены');
+                }
+            } catch (error) {
+                console.error('Полная ошибка:', error);
+                alert('Не удалось загрузить данные предыдущего визита: ' + error.message);
+            }
+        });
+    } else {
+        console.error('Кнопка не найдена!'); // Отладочный вывод
+    }
 
     // текущая дата
     const today = new Date();
@@ -54,28 +124,46 @@ document.addEventListener('DOMContentLoaded', function () {
     const employerIdInput = document.getElementById('employerId');
 
     searchInput.addEventListener('input', async () => {
-        const q = searchInput.value;
 
-        if (q.length < 2) {
-            dropdown.innerHTML = '';
-            return;
-        }
+    const q = searchInput.value.trim();
 
-        const res = await fetch(`/api/employers.php?q=${encodeURIComponent(q)}`);
-        const data = await res.json();
-
+    if (q.length < 2) {
         dropdown.innerHTML = '';
+        dropdown.classList.remove('show');
+        return;
+    }
 
-        data.forEach(emp => {
-            const div = document.createElement('div');
-            div.classList.add('dropdown-item');
-            div.innerText = `${emp.name} (ИНН: ${emp.inn ?? '-'})`;
+    const res = await fetch(
+        `/api/employers.php?q=${encodeURIComponent(q)}`
+    );
 
-            div.onclick = () => selectEmployer(emp.id);
+    const data = await res.json();
 
-            dropdown.appendChild(div);
-        });
+    dropdown.innerHTML = '';
+
+    if (!data.length) {
+        dropdown.classList.remove('show');
+        return;
+    }
+
+    data.forEach(emp => {
+
+        const div = document.createElement('div');
+
+        div.classList.add('dropdown-item');
+
+        div.innerText =
+            `${emp.name} (ИНН: ${emp.inn ?? '-'})`;
+
+        div.onclick = () => selectEmployer(emp.id);
+
+        dropdown.appendChild(div);
+
     });
+
+    dropdown.classList.add('show');
+
+});
 
     async function selectEmployer(id) {
         const res = await fetch(`/api/employer.php?id=${id}`);
@@ -101,10 +189,23 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('flat').value = emp.flat;
 
         dropdown.innerHTML = '';
+dropdown.classList.remove('show');
     }
 
+    document.addEventListener('click', (e) => {
+
+    const inside =
+        searchInput.contains(e.target) ||
+        dropdown.contains(e.target);
+
+    if (!inside) {
+        dropdown.classList.remove('show');
+    }
+
+});
+
     searchInput.addEventListener('input', () => {
-        employerIdInput.value = null;
+        employerIdInput.value = '';
         document.getElementById('organizationName').value = searchInput.value;
     });
 });

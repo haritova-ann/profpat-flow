@@ -61,6 +61,16 @@ document.addEventListener('DOMContentLoaded', function () {
         e.target.value = result;
     });
 
+    // ввод только цифр
+    document.querySelectorAll('.numeric-input').forEach(input => {
+    input.addEventListener('input', () => {
+
+        input.value = input.value.replace(/[^0-9\-]/g, '');
+
+    });
+
+    });
+
     // дата рождения
     document.getElementById('birthDate').addEventListener('input', function(e) {
         let x = e.target.value.replace(/\D/g, '').slice(0, 8);
@@ -88,6 +98,42 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     document.getElementById('birthDate').addEventListener('blur', function(e) {
+    const value = e.target.value;
+
+    if (value && !isRealDate(value)) {
+        e.target.setCustomValidity('Некорректная дата');
+    } else {
+        e.target.setCustomValidity('');
+    }
+});
+
+// дата паспорта
+document.getElementById('documentDate').addEventListener('input', function(e) {
+        let x = e.target.value.replace(/\D/g, '').slice(0, 8);
+        let formatted = '';
+        if (x.length > 0) formatted += x.slice(0, 2);
+        if (x.length >= 3) formatted += '.' + x.slice(2, 4);
+        if (x.length >= 5) formatted += '.' + x.slice(4, 8);
+
+        e.target.value = formatted;
+    });
+
+    function isRealDate(date) {
+    const parts = date.split('.');
+    if (parts.length !== 3) return false;
+
+    const [day, month, year] = parts.map(Number);
+
+    const d = new Date(year, month - 1, day);
+
+    return (
+        d.getFullYear() === year &&
+        d.getMonth() === month - 1 &&
+        d.getDate() === day
+    );
+    }
+
+    document.getElementById('documentDate').addEventListener('blur', function(e) {
     const value = e.target.value;
 
     if (value && !isRealDate(value)) {

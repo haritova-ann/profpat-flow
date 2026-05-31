@@ -1,12 +1,16 @@
 body {
+    margin: 0;
     font-family: Arial, sans-serif;
-    background: #f5f7fb;
-    padding: 20px;
+    background: #f3f5f9;
 }
 
+/* =========================
+ОСНОВНОЙ КОНТЕНТ
+========================= */
 .container {
-    max-width: 900px;
+    max-width: 1000px;
     margin: auto;
+    margin-top: 20px;
     background: white;
     padding: 25px;
     border-radius: 12px;
@@ -17,10 +21,39 @@ h2 {
     margin-bottom: 20px;
 }
 
+h3 {
+    margin-top: 30px;
+}
+
+/* Поиск на главной странице */ 
+.search-form {
+    display: flex;
+    gap: 12px;
+
+    margin-top: 20px;
+    margin-bottom: 25px;
+}
+
+.search-form input {
+    flex: 1;
+}
+
+.search-form button {
+    white-space: nowrap;
+}
+
+/* */
 .form-group {
     display: flex;
     flex-direction: column;
+    flex: 1;
+    min-width: 180px;
     margin-bottom: 15px;
+}
+
+.form-group.small {
+    flex: 0 0 160px;
+    max-width: 150px;
 }
 
 label {
@@ -43,6 +76,7 @@ input:focus, select:focus {
 
 .row {
     display: flex;
+    flex-wrap: wrap;
     gap: 10px;
 }
 
@@ -63,35 +97,64 @@ button:hover {
     background: #357abd;
 }
 
-.patients-table {
-    width: 100%;
-    border-collapse: collapse;
+.patient {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f8fafc;
+    border-radius: 10px;
 }
 
-.patients-table th,
-.patients-table td {
-    padding: 10px;
-    border-bottom: 1px solid #eee;
-    text-align: left;
+/* Таблицы отображения пациентов, осмотров*/
+.patients-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: white;
+    border: 1px solid #e5eaf2;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
 }
 
 .patients-table th {
-    background: #f0f3f8;
+    background: #4a90e2;
+    color: #f1f5f9;
     font-weight: 600;
+    font-size: 16px;
+    text-align: left;
+    padding: 14px 16px;
+    border-bottom: 1px solid #e5eaf2;
 }
 
-.patients-table tr:hover {
-    background: #f9fbff;
+.patients-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 16px;
+    color: #000000;
+}
+
+.patients-table tbody tr:hover {
+    background: #f8fbff;
 }
 
 .clickable-row {
     cursor: pointer;
+    transition: background 0.15s ease;
 }
 
 .clickable-row:hover {
     background: #f1f5ff;
 }
 
+.patients-table tr:last-child td {
+    border-bottom: none;
+}
+
+.patients-table tbody tr:nth-child(even) {
+    background: #fcfdff;
+}
+
+/* */
 .card {
     background: #f9fbff;
     padding: 20px;
@@ -106,7 +169,6 @@ button:hover {
 .card p {
     margin: 5px 0;
 }
-
 
 /* Дополнительные стили для страницы просмотра медосмотра*/
 .info-row {
@@ -174,21 +236,450 @@ button:hover {
     background: #4a90e2;
 }
 
+.dropdown-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.dropdown-wrapper input {
+    width: 100%;
+    box-sizing: border-box;
+}
 
 .dropdown {
-    max-height: 150px;
-    overflow-y: auto;
-    background: white;
     position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+
     width: 100%;
-    z-index: 10;
+
+    max-height: 220px;
+    overflow-y: auto;
+
+    background: #fff;
+
+    border: 1px solid #d7dee8;
+    border-radius: 12px;
+
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+
+    z-index: 100;
+
+    display: none;
+}
+
+.dropdown.show {
+    display: block;
 }
 
 .dropdown-item {
-    padding: 8px;
+    padding: 12px 14px;
     cursor: pointer;
+    transition: background .15s;
 }
 
 .dropdown-item:hover {
-    background: #f0f0f0;
+    background: #f5f9ff;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 8px 20px;
+}
+
+.label {
+    color: #666;
+}
+
+
+/* =========================
+ОСНОВНОЙ LAYOUT
+========================= */
+
+.wrapper {
+    max-width: 1500px;
+    margin: 20px auto;
+    padding: 0 20px;
+
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+
+    align-items: start;
+}
+
+.card {
+    background: white;
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 16px;
+}
+
+.info-row {
+    display: flex;
+    margin-bottom: 12px;
+}
+
+.info-label {
+    width: 180px;
+    color: #667085;
+}
+
+.info-value {
+    flex: 1;
+}
+
+/* =========================
+SIDEBAR
+========================= */
+
+.sidebar {
+    position: sticky;
+    top: 90px;
+}
+
+.route-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #eceff3;
+}
+
+.route-item:last-child {
+    border-bottom: none;
+}
+
+.print-grid {
+    display: grid;
+    gap: 10px;
+}
+
+.print-btn {
+    width: 100%;
+    border: none;
+    background: #2563eb;
+    color: white;
+    padding: 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: left;
+}
+
+.route-sheet-card {
+margin-top: 20px;
+}
+
+.route-sheet-header {
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.route-group {
+    margin-bottom: 25px;
+}
+
+.route-group-title {
+    font-weight: bold;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #ddd;
+}
+
+.route-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+
+    padding: 6px 0;
+
+    border-bottom: 1px dashed #ddd;
+}
+
+.route-item-name {
+    flex: 1;
+}
+
+.route-item-result {
+    width: 180px;
+    text-align: right;
+    color: #777;
+}
+
+.section {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.section h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+input,
+textarea {
+    padding: 10px;
+    border: 1px solid #cfd6df;
+    border-radius: 10px;
+    font-size: 14px;
+}
+
+textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+input:focus,
+textarea:focus {
+    border-color: #4a90e2;
+    outline: none;
+}
+
+/* чекбоксы */
+.document-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.document-option {
+    display: flex;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid #d7dee8;
+    border-radius: 12px;
+    background: #fff;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.document-option:hover {
+    border-color: #4a90e2;
+    background: #f8fbff;
+}
+
+.document-option input {
+    margin-top: 3px;
+    width: 18px;
+    height: 18px;
+}
+
+.document-title {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.document-description {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.hidden {
+    display: none;
+}
+
+.submit-btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 10px;
+    background: #4a90e2;
+    color: #fff;
+    cursor: pointer;
+}
+
+/* vk */
+.decision-options {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .decision-option {
+        border: 1px solid #dfe5ec;
+        border-radius: 10px;
+        padding: 14px;
+        cursor: pointer;
+        transition: .2s;
+    }
+
+    .decision-option:hover {
+        border-color: #9db8ff;
+        background: #f7faff;
+    }
+
+    .decision-option input {
+        margin-right: 10px;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+/* маршртуный лист */
+.route-table {
+
+width: 100%;
+
+border-collapse: collapse;
+
+table-layout: fixed;
+
+}
+
+.route-table th,
+.route-table td {
+
+border: 1px solid black;
+
+padding: 4px 6px;
+
+vertical-align: top;
+
+}
+
+/* Кабинет */
+.route-table th:nth-child(1),
+.route-table td:nth-child(1) {
+
+width: 125px;
+
+text-align: center;
+
+white-space: nowrap;
+
+}
+
+.route-actions {
+
+display:flex;
+
+gap:10px;
+
+margin-bottom:12px;
+
+}
+
+.route-check {
+
+display:flex;
+
+align-items:center;
+
+gap:6px;
+
+}
+
+.route-row {
+
+transition:0.2s;
+
+}
+
+/* Цена */
+.route-table th:nth-child(3),
+.route-table td:nth-child(3) {
+
+width: 65px;
+
+text-align: right;
+
+white-space: nowrap;
+
+}
+
+/* Обследование занимает всё */
+.route-table th:nth-child(2),
+.route-table td:nth-child(2) {
+
+width: auto;
+
+}
+
+.route-comment {
+
+font-size: 12px;
+
+margin-top: 2px;
+
+color: #666;
+
+}
+
+.route-table tfoot td {
+
+font-weight: bold;
+
+}
+
+/* вк */
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+}
+
+.factor-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.factor-item {
+    border: 1px solid #dfe5ec;
+    border-radius: 10px;
+    padding: 12px 14px;
+    background: #fafcff;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: #eef4ff;
+    border: 1px solid #c8dafc;
+    font-weight: 600;
+}
+
+.doctor-card {
+    border: 1px solid #dfe5ec;
+    border-radius: 10px;
+    padding: 14px;
+}
+
+.actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.print-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    padding: 12px 16px;
+
+    border-radius: 10px;
+
+    text-decoration: none;
+
+    background: #2f6fed;
+    color: white;
+
+    transition: .2s;
+}
+
+.print-btn:hover {
+    background: #1d5ddd;
 }
