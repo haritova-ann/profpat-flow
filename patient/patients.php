@@ -1,5 +1,6 @@
 <?php
-require __DIR__ . '/../config/db.php';
+
+require_once __DIR__ . '/../includes/bootstrap.php';
 
 $sql = "
     SELECT 
@@ -18,33 +19,36 @@ $sql = "
 
 $stmt = $pdo->query($sql);
 $patients = $stmt->fetchAll();
+
+// ======================
+// Настраиваем header
+// ======================
+$topbarLeft = [
+    [
+        'label' => '← Регистратура',
+        'href' => '/index.php'
+    ]
+];
+
+require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<title>Список пациентов</title>
-<link rel="stylesheet" href="/assets/css/forms.css">
-</head>
-
-<body>
-
+<!-- =========================
+    Основной контент
+========================= -->
 <div class="container">
 <h2>Пациенты</h2>
 
-<div style="margin-bottom: 20px;">
-<a href="/index.php">
-    <button type="button">← Регистратура</button>
-</a>
+<div class="search-form">
+    <input 
+        type="text" 
+        id="searchInput"
+        placeholder="Поиск по ФИО или № карты"
+    >
+    <div>
+        <button type="submit">Найти</button>
+    </div>
 </div>
-
-<input 
-    type="text" 
-    id="searchInput"
-    placeholder="Поиск по ФИО или № карты"
-    style="margin-bottom:15px; width:100%;"
->
 
 <table class="patients-table">
     <thead>
@@ -59,22 +63,20 @@ $patients = $stmt->fetchAll();
 
     <?php foreach ($patients as $p): ?>
         <tr class="clickable-row" data-href="patient.php?id=<?= $p['id'] ?>">
-            <td><?= htmlspecialchars($p['medical_card_number']) ?></td>
+            <td><?= e($p['medical_card_number']) ?></td>
 
             <td>
-                <?= htmlspecialchars($p['last_name']) ?>
-                <?= htmlspecialchars($p['first_name']) ?>
-                <?= htmlspecialchars($p['middle_name']) ?>
+                <?= e($p['last_name']) ?>
+                <?= e($p['first_name']) ?>
+                <?= e($p['middle_name']) ?>
             </td>
 
             <td>
-                <?= $p['birth_date'] ? date('d.m.Y', strtotime($p['birth_date'])) : '' ?>
+                <?= formatDate($p['birth_date']) ?>
             </td>
 
             <td>
-                <?= $p['last_exam_date'] 
-                    ? date('d.m.Y', strtotime($p['last_exam_date'])) 
-                    : '—' ?>
+                <?= formatDate($p['last_exam_date']) ?>
             </td>
         </tr>
     <?php endforeach; ?>
@@ -161,5 +163,7 @@ function escapeHtml(str) {
 attachRowHandlers();
 
 </script>
-</body>
-</html>
+
+<?php
+
+require_once __DIR__ . '/../includes/footer.php';

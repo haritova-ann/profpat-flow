@@ -1,24 +1,43 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<title>Создание пациента</title>
-<link rel="stylesheet" href="/assets/css/forms.css">
-</head>
+<?php
 
-<body>
+require_once __DIR__ . '/../includes/bootstrap.php';
 
+// Контекст страницы для header (активные пункты, условия отображения)
+$page = 'patient';
+
+$lastName = $_GET['last_name'] ?? '';
+$firstName = $_GET['first_name'] ?? '';
+$middleName = $_GET['middle_name'] ?? '';
+
+// ======================
+// Настраиваем header
+// ======================
+$pageTitle = 'Новый пациент';
+
+$topbarLeft = [
+    [
+        'label' => '← Регистратура',
+        'href' => '/index.php'
+    ],
+    [
+        'type' => 'submit',
+        'label' => 'Сохранить',
+        'form' => 'patient-form',
+        'class' => 'topbar-primary'
+    ]
+];
+
+require_once __DIR__ . '/../includes/header.php';
+?>
+
+<!-- =========================
+    Основной контент
+========================= -->
 <div class="container">
 
-<div style="margin-bottom: 20px;">
-<a href="/index.php">
-    <button type="button">← Регистратура</button>
-</a>
-</div>
+<h2>Новый пациент</h2>
 
-<h2>Пациент</h2>
-
-<form action="save.php" method="POST">
+<form action="save.php" id="patient-form" method="POST">
 
 <div class="row">
 <div class="form-group">
@@ -35,17 +54,17 @@
 <div class="row">
 <div class="form-group">
 <label>Фамилия</label>
-<input type="text" name="last_name" id="lastName" required>
+<input type="text" name="last_name" id="lastName" value="<?= e($lastName) ?>" required>
 </div>
 
 <div class="form-group">
 <label>Имя</label>
-<input type="text" name="first_name" id="firstName" required>
+<input type="text" name="first_name" id="firstName" value="<?= e($firstName) ?>" required>
 </div>
 
 <div class="form-group">
 <label>Отчество</label>
-<input type="text" name="middle_name" id="middleName" required>
+<input type="text" name="middle_name" id="middleName" value="<?= e($middleName) ?>">
 </div>
 </div>
 
@@ -74,12 +93,12 @@
 <div class="row">
 <div class="form-group">
 <label>Серия</label>
-<input type="text" name="document_series" required>
+<input type="text" name="document_series" maxlength="4" class="numeric-input" required>
 </div>
 
 <div class="form-group">
 <label>Номер</label>
-<input type="text" name="document_number" required>
+<input type="text" name="document_number" maxlength="6" class="numeric-input" required>
 </div>
 </div>
 
@@ -91,18 +110,18 @@
 <div class="row">
 <div class="form-group">
 <label>Код структурного подразделения</label>
-<input type="text" name="document_authority_code" required>
+<input type="text" name="document_authority_code" class="numeric-input" required>
 </div>
 
 <div class="form-group">
 <label>Дата выдачи</label>
-<input type="text" name="document_date" required>
+<input type="text" name="document_date" id="documentDate" placeholder="ДД.ММ.ГГГГ" required>
 </div>
 </div>
 
 <div class="form-group">
 <label>СНИЛС</label>
-<input type="text" name="snils" id="snils" placeholder="___ ___ ___ __" maxlength="14" inputmode="numeric" required>
+<input type="text" name="snils" id="snils" placeholder="___ ___ ___ __" maxlength="14" inputmode="numeric">
 </div>
 
 <div class="form-group">
@@ -124,7 +143,7 @@
 </div>
 
 <div class="form-group">
-<label>Регион</label>
+<label>Район</label>
 <input type="text" name="district">
 </div>
 
@@ -158,12 +177,9 @@
 </div>
 </div>
 
-<button type="submit">Сохранить</button>
-
 </form>
 </div>
 
-<script src="/assets/js/patient.js"></script>
+<?php
 
-</body>
-</html>
+require_once __DIR__ . '/../includes/footer.php';

@@ -6,7 +6,10 @@
  * Загружает существующие данные и отправляет изменения в update.php
  */
 
-require __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../includes/bootstrap.php';
+
+// Контекст страницы для header (активные пункты, условия отображения)
+$page = 'patient';
 
 // Получаем ID пациента
 $patientId = $_GET['id'] ?? null;
@@ -27,29 +30,35 @@ $patient = $stmt->fetch();
 if (!$patient) {
     die('Пациента не найден');
 }
+
+// ======================
+// Настраиваем topbar
+// ======================
+$topbarLeft = [
+    [
+        'label' => '← Карта пациента',
+        'href' => '/patient/patient.php?id=' . $patientId
+    ],
+    [
+        'type' => 'submit',
+        'label' => 'Сохранить',
+        'form' => 'patient-form',
+        'class' => 'topbar-primary'
+    ]
+
+];
+
+require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<title>Редактирование данных пациента</title>
-<link rel="stylesheet" href="/assets/css/forms.css">
-</head>
 
-<body>
-
+<!-- =========================
+Основной контент
+========================= -->
 <div class="container">
+<h2>Редактирование данных пациента</h2>
 
-<div style="margin-bottom: 20px;">
-<a href="/patient/patient.php?id=<?= $patient['id'] ?>">
-    <button type="button">← К карте пациента (без сохранения)</button>
-</a>
-</div>
-
-<h2>Пациент</h2>
-
-<form action="/patient/update.php" method="POST">
+<form action="/patient/update.php" id="patient-form" method="POST">
 
 <input type="hidden" name="id" value="<?= $patient['id'] ?>">
 
@@ -57,13 +66,13 @@ if (!$patient) {
 <div class="form-group">
 <label>Дата заполнения</label>
 <input type="text" name="created_at" id="today"
-       value="<?= date('d.m.Y', strtotime($patient['created_at'])) ?>" readonly>
+       value="<?= formatDate($patient['created_at']) ?>" readonly>
 </div>
 
 <div class="form-group">
 <label>№ АК</label>
 <input type="text" name="medical_card_number" id="ak"
-       value="<?= htmlspecialchars($patient['medical_card_number']) ?>" readonly>
+       value="<?= e($patient['medical_card_number']) ?>" readonly>
 </div>
 </div>
 
@@ -71,26 +80,26 @@ if (!$patient) {
 <div class="form-group">
 <label>Фамилия</label>
 <input type="text" name="last_name" id="lastName"
-       value="<?= htmlspecialchars($patient['last_name']) ?>" required>
+       value="<?= e($patient['last_name']) ?>" required>
 </div>
 
 <div class="form-group">
 <label>Имя</label>
 <input type="text" name="first_name" id="firstName"
-       value="<?= htmlspecialchars($patient['first_name']) ?>" required>
+       value="<?= e($patient['first_name']) ?>" required>
 </div>
 
 <div class="form-group">
 <label>Отчество</label>
 <input type="text" name="middle_name" id="middleName"
-       value="<?= htmlspecialchars($patient['middle_name']) ?>" required>
+       value="<?= e($patient['middle_name']) ?>">
 </div>
 </div>
 
 <div class="form-group">
 <label>Дата рождения</label>
 <input type="text" name="birth_date" id="birthDate"
-       value="<?= date('d.m.Y', strtotime($patient['birth_date'])) ?>"
+       value="<?= formatDate($patient['birth_date']) ?>"
        placeholder="ДД.ММ.ГГГГ" required>
 </div>
 
@@ -115,54 +124,54 @@ if (!$patient) {
 <div class="form-group">
 <label>Серия</label>
 <input type="text" name="document_series"
-       value="<?= htmlspecialchars($patient['document_series']) ?>" required>
+       value="<?= e($patient['document_series']) ?>" class="numeric-input" required>
 </div>
 
 <div class="form-group">
 <label>Номер</label>
 <input type="text" name="document_number"
-       value="<?= htmlspecialchars($patient['document_number']) ?>" required>
+       value="<?= e($patient['document_number']) ?>" class="numeric-input" required>
 </div>
 </div>
 
 <div class="form-group">
 <label>Кем выдан</label>
 <input type="text" name="document_authority"
-       value="<?= htmlspecialchars($patient['document_authority']) ?>" required>
+       value="<?= e($patient['document_authority']) ?>" required>
 </div>
 
 <div class="row">
 <div class="form-group">
 <label>Код структурного подразделения</label>
 <input type="text" name="document_authority_code"
-       value="<?= htmlspecialchars($patient['document_authority_code']) ?>" required>
+       value="<?= e($patient['document_authority_code']) ?>" class="numeric-input" required>
 </div>
 
 <div class="form-group">
 <label>Дата выдачи</label>
 <input type="text" name="document_date"
-       value="<?= date('d.m.Y', strtotime($patient['document_date'])) ?>" required>
+       value="<?= formatDate($patient['document_date']) ?>" class="numeric-input" required>
 </div>
 </div>
 
 <div class="form-group">
 <label>СНИЛС</label>
 <input type="text" name="snils" id="snils"
-       value="<?= htmlspecialchars($patient['snils']) ?>"
+       value="<?= e($patient['snils']) ?>"
        placeholder="___ ___ ___ __" maxlength="14" inputmode="numeric" required>
 </div>
 
 <div class="form-group">
 <label>Телефон</label>
 <input type="tel" name="phone_number" id="phoneNumber"
-       value="<?= htmlspecialchars($patient['phone_number']) ?>"
+       value="<?= e($patient['phone_number']) ?>"
        placeholder="+7 ___ ___ __ __">
 </div>
 
 <div class="form-group">
 <label>Email</label>
 <input type="email" name="email"
-       value="<?= htmlspecialchars($patient['email']) ?>"
+       value="<?= e($patient['email']) ?>"
        placeholder="example@mail.com">
 </div>
 
@@ -172,19 +181,19 @@ if (!$patient) {
 <div class="form-group">
 <label>Субъект РФ</label>
 <input type="text" name="region"
-       value="<?= htmlspecialchars($patient['region']) ?>" required>
+       value="<?= e($patient['region']) ?>" required>
 </div>
 
 <div class="form-group">
 <label>Регион</label>
 <input type="text" name="district"
-       value="<?= htmlspecialchars($patient['district']) ?>">
+       value="<?= e($patient['district']) ?>">
 </div>
 
 <div class="form-group">
 <label>Населенный пункт</label>
 <input type="text" name="locality"
-       value="<?= htmlspecialchars($patient['locality']) ?>" required>
+       value="<?= e($patient['locality']) ?>" required>
 </div>
 </div>
 
@@ -192,13 +201,13 @@ if (!$patient) {
 <div class="form-group">
 <label>Улица</label>
 <input type="text" name="street"
-       value="<?= htmlspecialchars($patient['street']) ?>" required>
+       value="<?= e($patient['street']) ?>" required>
 </div>
 
 <div class="form-group">
 <label>Дом</label>
 <input type="text" name="house"
-       value="<?= htmlspecialchars($patient['house']) ?>" required>
+       value="<?= e($patient['house']) ?>" required>
 </div>
 </div>
 
@@ -206,13 +215,13 @@ if (!$patient) {
 <div class="form-group">
 <label>Корпус</label>
 <input type="text" name="building"
-       value="<?= htmlspecialchars($patient['building']) ?>">
+       value="<?= e($patient['building']) ?>">
 </div>
 
 <div class="form-group">
 <label>Квартира</label>
 <input type="text" name="flat"
-       value="<?= htmlspecialchars($patient['flat']) ?>">
+       value="<?= e($patient['flat']) ?>">
 </div>
 </div>
 
@@ -221,7 +230,6 @@ if (!$patient) {
 </form>
 </div>
 
-<script src="/assets/js/patient.js"></script>
+<?php
 
-</body>
-</html>
+require_once __DIR__ . '/../includes/footer.php';
