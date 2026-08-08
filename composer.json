@@ -1,0 +1,9 @@
+{
+    "name": "ann-haritova/profpat-flow",
+    "description": "Application for generating medical registry documents",
+    "type": "project",
+    "require": {
+        "php": "^8.3",
+        "phpoffice/phpword": "^1.4"
+    }
+}
