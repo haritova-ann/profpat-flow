@@ -359,6 +359,8 @@ require_once __DIR__ . '/../includes/header.php';
 
             <br>
             <button class="print-btn" onclick="printRouteSheet()">Печать маршрутного листа</button>
+            <p>
+            <button class="print-btn" onclick="printCertificate()">Печать справки об оплате</button>
         </div>
                 
         <!-- ======================
@@ -593,6 +595,293 @@ function printRouteSheet() {
     
     // Удаляем временный фрейм через секунду после закрытия окна печати
     setTimeout(() => { document.body.removeChild(iframe); }, 1000);
+}
+
+function printCertificate() {
+    // 1. Создаём скрытый iframe для печати
+    const iframe = document.createElement('iframe');
+
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = 'none';
+
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow.document;
+
+    // 2. Создаём основной контейнер справки
+    const certificate = doc.createElement('div');
+    certificate.className = 'payment-certificate';
+
+    // 3. Шапка справки
+    certificate.innerHTML = `
+        <h1>Общество с ограниченной ответственностью</h1>
+        <h1>«Центр квантовой медицины №1»</h1>
+        <p>660048, Россия, Красноярский край,</p>
+        <p> г.Красноярск,ул.Калинина, 41</p>
+        <p> ОГРН 1032401796250</h2>
+        <p> ИНН 2460060098/КПП 246001001 тел: 296-511 </p>
+        <p> факс: 2913-009</p>
+
+        <p><style = text-align: left> г. Красноярск  </style></p>
+
+        <h1>Справка об оплате услуг медицинского осмотра</h1>
+
+        <div class="patient-info">
+            <div>
+                Выдана (Ф.И.О.)
+                <strong><?= e($data['last_name']) ?>
+                <?= e($data['first_name']) ?>
+                <?= e($data['middle_name']) ?></strong>
+            </div>
+
+        </div>
+
+        <h2>В том, что он (она) оплатил(а) медицинские услуги стоимостью </h2>
+    `;
+
+    // 4. Клонируем существующий маршрутный лист
+    const originalSheet = document.getElementById('route-sheet');
+
+    if (!originalSheet) {
+        console.error('Не найден элемент #route-sheet');
+        document.body.removeChild(iframe);
+        return;
+    }
+
+    const sheetClone = originalSheet.cloneNode(true);
+
+    // 5. Удаляем элементы интерфейса
+    sheetClone
+        .querySelectorAll('.route-actions, .print-btn, .section-title, .route-comment')
+        .forEach(el => el.remove());
+
+    // 6. Удаляем невыбранные исследования
+    sheetClone
+        .querySelectorAll('.route-row.is-disabled-print')
+        .forEach(el => el.remove());
+
+    // 7. Удаляем checkbox и label вокруг него,
+    // но оставляем название кабинета на этом этапе
+    sheetClone
+        .querySelectorAll('.route-check input')
+        .forEach(el => el.remove());
+
+    // 8. Убираем колонку "Каб."
+    sheetClone
+        .querySelectorAll('.route-table tr')
+        .forEach(row => {
+            const firstCell = row.querySelector('th:first-child, td:first-child');
+
+            if (firstCell) {
+                firstCell.remove();
+            }
+        });
+
+    // 9. После удаления первой колонки корректируем строку "Итого"
+    const totalCell = sheetClone.querySelector('.route-table tfoot td:first-child');
+
+    if (totalCell) {
+        totalCell.setAttribute('colspan', '1');
+    }
+
+    // 10. Добавляем очищенный маршрутный лист в справку
+    certificate.appendChild(sheetClone);
+
+    // 11. Блок подписи и печати
+    const signatureBlock = doc.createElement('div');
+
+    signatureBlock.className = 'signature-block';
+
+    signatureBlock.innerHTML = `
+        <div class="signature-row">
+            <span>Генеральный директор ООО «ЦКМ №1»</span>
+
+            <span class="signature-line"></span>
+
+            <span> Н. Н. Шломов</span>
+        </div>
+
+    `;
+
+    certificate.appendChild(signatureBlock);
+
+    // 12. Стили только для печатной версии
+    const style = doc.createElement('style');
+
+    style.textContent = `
+        @page {
+            size: A4;
+            margin: 15mm;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #fff;
+            color: #000;
+            font-family: Times New Roman;
+            font-size: 12px;
+        }
+
+        .payment-certificate {
+            width: 100%;
+        }
+
+        /* Заголовок */
+
+        h1 {
+            text-align: center;
+            font-size: 18px;
+            margin: 0 0 10px 0;
+        }
+
+        p {
+            text-align: center;
+            font-size: 14px;
+            margin: 0 0 2px 0;
+        }
+
+        h2 {
+            text-align: center;
+            font-size: 14px;
+            margin: 20px 0 10px 0;
+        }
+
+        /* Данные пациента */
+
+        .patient-info {
+            font-size: 18px;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        /* Карточка маршрутного листа */
+
+        .route-sheet-card {
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            border: none;
+            box-shadow: none;
+        }
+
+        /* Таблица */
+
+        .route-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .route-table th,
+        .route-table td {
+            border: 1px solid #000;
+            padding: 4px 6px;
+            vertical-align: top;
+            line-height: 1.2;
+        }
+
+        /*
+         * После удаления кабинета осталось две колонки:
+         * 1 — обследование
+         * 2 — цена
+         */
+
+        .route-table th:first-child,
+        .route-table td:first-child {
+            width: auto;
+            text-align: left;
+        }
+
+        .route-table th:last-child,
+        .route-table td:last-child {
+            width: 90px;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .route-comment {
+            font-size: 10px;
+            margin-top: 2px;
+            color: #333;
+        }
+
+        .route-table tfoot td {
+            font-weight: bold;
+        }
+
+        /*
+         * Не разрывать отдельную услугу
+         * между страницами
+         */
+
+        .route-table tr {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        /*
+         * Не разрывать блок подписи
+         */
+
+        .signature-block {
+            
+            margin-top: 35px;
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        .signature-row {
+            
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            margin-bottom: 25px;
+        }
+
+        .signature-line {
+            display: inline-block;
+            width: 150px;
+            border-bottom: 1px solid #000;
+        }
+
+        .stamp-area {
+            text-align: right;
+            margin-top: 20px;
+            margin-right: 40px;
+        }
+
+        .stamp-area span {
+            display: inline-block;
+            width: 70px;
+            height: 50px;
+            text-align: center;
+            padding-top: 20px;
+        }
+    `;
+
+    // 13. Добавляем стили и документ в iframe
+    doc.head.appendChild(style);
+    doc.body.appendChild(certificate);
+
+    // 14. Даём браузеру немного времени построить DOM
+    iframe.contentWindow.focus();
+
+    setTimeout(() => {
+        iframe.contentWindow.print();
+
+        // 15. Удаляем iframe после печати
+        setTimeout(() => {
+            if (iframe.parentNode) {
+                iframe.parentNode.removeChild(iframe);
+            }
+        }, 1000);
+
+    }, 100);
 }
 </script>
 
