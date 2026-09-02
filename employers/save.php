@@ -8,6 +8,7 @@ try {
     // ======================
     $name = trim($_POST['name'] ?? '');
     $inn = trim($_POST['inn'] ?? '');
+    $inn = $inn === '' ? null : $inn;
     $ogrn = trim($_POST['ogrn'] ?? '');
     $okvd = trim($_POST['okvd'] ?? '');
 

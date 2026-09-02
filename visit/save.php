@@ -25,6 +25,7 @@ try {
     $psychiatricFactorsString = $_POST['psychiatric_factors'] ?? '';
 
     $inn = $_POST['inn'] ?? null;
+    $inn = $inn === '' ? null : $inn;
     $ogrn = $_POST['ogrn'] ?? null;
     $okvd = $_POST['okvd'] ?? null;
 

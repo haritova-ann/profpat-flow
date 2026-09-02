@@ -34,6 +34,7 @@ try {
     $psychiatricFactors = $_POST['psychiatric_factors'] ?? null;
 
     $inn = $_POST['inn'] ?? null;
+    $inn = $inn === '' ? null : $inn;
     $ogrn = $_POST['ogrn'] ?? null;
     $okvd = $_POST['okvd'] ?? null;
 
