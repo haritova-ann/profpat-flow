@@ -193,7 +193,6 @@ require_once __DIR__ . '/../includes/header.php';
     type="text" 
     name="inn" 
     value="<?= e($visit['inn']) ?>" 
-    required
 >
 </div>
 
@@ -203,7 +202,6 @@ require_once __DIR__ . '/../includes/header.php';
     type="text" 
     name="ogrn" 
     value="<?= e($visit['ogrn']) ?>" 
-    required
 >
 </div>
 
@@ -213,7 +211,6 @@ require_once __DIR__ . '/../includes/header.php';
     type="text" 
     name="okvd" 
     value="<?= e($visit['okvd']) ?>" 
-    required
 >
 </div>
 </div>
@@ -250,7 +247,6 @@ require_once __DIR__ . '/../includes/header.php';
     type="text" 
     name="employer_region" 
     value="<?= e($visit['employer_region']) ?>" 
-    required
 >
 </div>
 
@@ -269,7 +265,6 @@ require_once __DIR__ . '/../includes/header.php';
     type="text" 
     name="employer_locality" 
     value="<?= e($visit['employer_locality']) ?>" 
-    required
 >
 </div>
 </div>
@@ -281,7 +276,6 @@ require_once __DIR__ . '/../includes/header.php';
     type="text" 
     name="employer_street" 
     value="<?= e($visit['employer_street']) ?>" 
-    required
 >
 </div>
 
@@ -291,7 +285,6 @@ require_once __DIR__ . '/../includes/header.php';
     type="text" 
     name="employer_house" 
     value="<?= e($visit['employer_house']) ?>" 
-    required
 >
 </div>
 </div>
