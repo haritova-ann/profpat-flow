@@ -36,4 +36,6 @@ INSERT INTO requirements (name, type, is_global, min_age, gender) VALUES
 ('Биохимический анализ крови (ЩФ, о. билирубин, АЛТ, АСТ)', 'lab', FALSE, NULL, NULL),
 ('Анализ крови на HBs-Ag, анти-HBc-Ig (суммарные), анти-HCV-Ig (суммарные), ВИЧ', 'lab', FALSE, NULL, NULL),
 ('Рентгенография длинных трубчатых костей (фтор и его соединения)', 'instr', FALSE, NULL, NULL),
-('Исследование уровня дельта аминолевулиновой кислоты или копропорфирина в моче', 'lab', FALSE, NULL, NULL);
+('Исследование уровня дельта аминолевулиновой кислоты или копропорфирина в моче', 'lab', FALSE, NULL, NULL),
+('Оформление ЛМК', 'exam', FALSE, NULL, NULL),
+('Гигиеническое обучение', 'exam', FALSE, NULL, NULL);

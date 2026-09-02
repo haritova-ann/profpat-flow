@@ -913,4 +913,12 @@ INSERT INTO factor_requirements (hazard_factor_id, requirement_id, period_years,
 ( '218', '26', '1', 'preliminary'),
 ( '218', '28', '1', NULL),
 ( '218', '27', '1', 'preliminary'),
-( '218', '29', '1', 'preliminary');
+( '218', '29', '1', 'preliminary'),
+( '215', '40', '1', NULL),
+( '215', '39', '1', NULL),
+( '216', '40', '1', NULL),
+( '216', '39', '1', NULL),
+( '217', '40', '1', NULL),
+( '217', '39', '1', NULL),
+( '218', '40', '1', NULL),
+( '218', '39', '1', NULL);
