@@ -95,6 +95,7 @@ $stmt = $pdo->prepare("
       AND (r.gender IS NULL OR r.gender = :gender)
       AND (r.min_age IS NULL OR r.min_age <= :age)
       AND (fr.exam_type IS NULL OR fr.exam_type = :exam_type)
+      AND r.is_active = TRUE
     GROUP BY r.id, r.name, r.type, r.room, r.comment, r.sort_order, rp.price
     ORDER BY r.sort_order, r.name
 ");
