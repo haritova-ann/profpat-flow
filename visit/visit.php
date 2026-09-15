@@ -371,12 +371,12 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="section-title">Печать документов</div>
             
             <div class="print-buttons">
-                <button class="print-btn" onclick="printDocument('pack_with_psy')">
-                    Пакет документов с ОПО
+                <button class="print-btn" onclick="printDocument('pack_without_psy')">
+                    Пакет документов (обложка, согласия, выписка, заключение)
                 </button>
 
-                <button class="print-btn" onclick="printDocument('pack_without_psy')">
-                    Пакет документов без ОПО
+                <button class="print-btn" onclick="printDocument('certificate')">
+                    Заключение
                 </button>
                 
                 <button class="print-btn" onclick="printDocument('ambulatory_card')">
@@ -389,10 +389,6 @@ require_once __DIR__ . '/../includes/header.php';
                 
                 <button class="print-btn" onclick="printDocument('medical_consent')">
                     Согласие на медицинское вмешательство
-                </button>
-                
-                <button class="print-btn" onclick="printDocument('personal_data_consent')">
-                    Согласие на ОПД
                 </button>
 
                 <button class="print-btn" onclick="printDocument('psyhiatric_certificate')">
@@ -470,6 +466,11 @@ require_once __DIR__ . '/../includes/header.php';
                     Сформировать заключение
 
                 </a>
+
+                <div class="print-buttons">
+                <button class="print-btn" onclick="printDocument('certificate_for_treatment')">
+                    Справка на дообследование и лечение
+                </button>
 
             <?php endif; ?>
 

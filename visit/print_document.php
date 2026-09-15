@@ -63,12 +63,13 @@ try {
     $templates = [
         'ambulatory_card' => 'Амбулаторная карта.docx',
         'contract' => 'Договор об оказании платных медицинских услуг.docx',
-        'medical_consent' => 'Согласие на медицинское вмешательство.docx',
-        'personal_data_consent' => 'Согласние на ОПД.docx',
+        'medical_consent' => 'Согласния.docx',
         'psyhiatric_certificate' => 'Справка психиатра нарколога.docx',
         'medical_record_extract' => 'Выписка из медицинской карты.docx',
         'pack_with_psy' => 'Пакет документов с психиатрическим освидетельствованием.docx',
-        'pack_without_psy' => 'Пакет документов без психиатрического освидетельствования.docx' 
+        'pack_without_psy' => 'Карта, согласия, выписка, заключение, справка психиатра.docx',
+        'certificate' => 'Заключение по результатам медицинского осмотра.docx',
+        'certificate_for_treatment' => 'Справка на дообследование и лечение.docx'
     ];
 
     if (!isset($templates[$documentType])) {
