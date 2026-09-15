@@ -359,8 +359,14 @@ require_once __DIR__ . '/../includes/header.php';
             </table>
 
             <br>
-            <button class="print-btn" onclick="printRouteSheet()">Печать маршрутного листа</button>
+            <button class="print-btn" onclick="printRouteSheet(true)">Печать маршрутного листа с ценами</button>
             <p>
+
+            <button class="print-btn" onclick="printRouteSheet(false)">
+                Печать маршрутного листа без цен
+            </button>
+            <p>
+                
             <button class="print-btn" onclick="printCertificate()">Печать справки об оплате</button>
         </div>
                 
@@ -540,7 +546,7 @@ function toggleAll(state) {
 }
 
 // Печать через изолированный iframe
-function printRouteSheet() {
+function printRouteSheet(showPrices = true) {
     // 1. Создаем скрытый элемент iframe
     const iframe = document.createElement('iframe');
     iframe.style.position = 'fixed';
@@ -553,33 +559,98 @@ function printRouteSheet() {
 
     const doc = iframe.contentWindow.document;
 
-    // 2. Клонируем очищенную от интерфейса таблицу
+    // 2. Клонируем маршрутный лист
     const originalSheet = document.getElementById('route-sheet');
     const sheetClone = originalSheet.cloneNode(true);
 
-    // Удаляем ненужные кнопки и выключенные строки в копии
-    sheetClone.querySelectorAll('.route-actions, .print-btn, .section-title').forEach(el => el.remove());
-    sheetClone.querySelectorAll('.route-row.is-disabled-print').forEach(el => el.remove());
-    sheetClone.querySelectorAll('.route-check input').forEach(el => el.remove());
+    // Удаляем ненужные элементы интерфейса
+    sheetClone
+        .querySelectorAll('.route-actions, .print-btn, .section-title')
+        .forEach(el => el.remove());
 
-    // 3. Стили для экстремального сжатия таблицы внутри А4 (ваша старая JS-логика)
+    // Удаляем выключенные строки
+    sheetClone
+        .querySelectorAll('.route-row.is-disabled-print')
+        .forEach(el => el.remove());
+
+    // Удаляем checkbox
+    sheetClone
+        .querySelectorAll('.route-check input')
+        .forEach(el => el.remove());
+
+    // Если печать без цен — удаляем колонку "Цена"
+    if (!showPrices) {
+        sheetClone
+            .querySelectorAll('.route-table tr')
+            .forEach(row => {
+                const priceCell = row.querySelector('th:last-child, td:last-child');
+
+                if (priceCell) {
+                    priceCell.remove();
+                }
+            });
+    }
+
+    // 3. Стили для печати
     const style = doc.createElement('style');
     style.textContent = `
-        body { margin: 0; padding: 0; background: #fff; font-family: sans-serif; }
-        .route-table { width: 95%; border-collapse: collapse; table-layout: fixed; }
-        .route-table th, .route-table td { border: 1px solid grey; padding: 1px 3px; vertical-align: top; line-height: 1; font-size: 10px; }
-        .route-table th:nth-child(1), .route-table td:nth-child(1) { width: 120px; text-align: center; white-space: nowrap; }
-        .route-table th:nth-child(3), .route-table td:nth-child(3) { width: 75px; text-align: right; white-space: nowrap; }
-        .route-table th:nth-child(2), .route-table td:nth-child(2) { width: auto; }
-        .route-comment { font-size: 8px; margin-top: 1px; color: #333; }
-        .route-table tfoot td { font-weight: bold; }
+        body {
+            margin: 0;
+            padding: 0;
+            background: #fff;
+            font-family: sans-serif;
+        }
+
+        .route-table {
+            width: 95%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .route-table th,
+        .route-table td {
+            border: 1px solid grey;
+            padding: 1px 3px;
+            vertical-align: top;
+            line-height: 1;
+            font-size: 10px;
+        }
+
+        .route-table th:nth-child(1),
+        .route-table td:nth-child(1) {
+            width: 120px;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .route-table th:nth-child(3),
+        .route-table td:nth-child(3) {
+            width: 75px;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .route-table th:nth-child(2),
+        .route-table td:nth-child(2) {
+            width: auto;
+        }
+
+        .route-comment {
+            font-size: 8px;
+            margin-top: 1px;
+            color: #333;
+        }
+
+        .route-table tfoot td {
+            font-weight: bold;
+        }
     `;
 
     // 4. Наполняем iframe данными и стилями
     doc.head.appendChild(style);
     doc.body.appendChild(sheetClone);
 
-    // 5. Логика масштабирования по высоте (если контента слишком много)
+    // 5. Логика масштабирования по высоте
     const targetHeight = window.innerHeight * 0.5;
     const printedSheet = doc.getElementById('route-sheet');
     const actualHeight = printedSheet.scrollHeight;
@@ -591,12 +662,16 @@ function printRouteSheet() {
         printedSheet.style.width = `${100 / scale}%`;
     }
 
-    // 6. Вызываем печать внутри фрейма и удаляем его
+    // 6. Вызываем печать внутри iframe
     iframe.contentWindow.focus();
     iframe.contentWindow.print();
-    
-    // Удаляем временный фрейм через секунду после закрытия окна печати
-    setTimeout(() => { document.body.removeChild(iframe); }, 1000);
+
+    // Удаляем временный iframe
+    setTimeout(() => {
+        if (iframe.parentNode) {
+            iframe.parentNode.removeChild(iframe);
+        }
+    }, 1000);
 }
 
 function printCertificate() {
