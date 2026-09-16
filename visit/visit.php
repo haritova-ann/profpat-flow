@@ -576,7 +576,7 @@ function printRouteSheet(showPrices = true) {
     // 3. Обрабатываем строки маршрута
     const specialServices = [
         'Оформление ЛМК',
-        'Фото',
+        'Фото 3х4',
         'Гигиеническое обучение'
     ];
 
