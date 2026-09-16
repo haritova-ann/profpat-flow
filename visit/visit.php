@@ -378,7 +378,11 @@ require_once __DIR__ . '/../includes/header.php';
             
             <div class="print-buttons">
                 <button class="print-btn" onclick="printDocument('pack_without_psy')">
-                    Пакет документов (обложка, согласия, выписка, заключение)
+                    Пакет документов (обложка, согласия, заключение)
+                </button>
+
+                <button class="print-btn" onclick="printDocument('medical_record_extract')">
+                    Выписка из медицинской карты
                 </button>
 
                 <button class="print-btn" onclick="printDocument('certificate')">
@@ -401,9 +405,7 @@ require_once __DIR__ . '/../includes/header.php';
                     Справка психиатра-нарколога
                 </button>
 
-                <button class="print-btn" onclick="printDocument('medical_record_extract')">
-                    Выписка из медицинской карты
-                </button>
+                
             </div>
         </div>
 
