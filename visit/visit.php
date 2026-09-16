@@ -548,15 +548,18 @@ function toggleAll(state) {
 }
 
 // Печать через изолированный iframe
+// Печать через изолированный iframe
 function printRouteSheet(showPrices = true) {
-    // 1. Создаем скрытый элемент iframe
+    // 1. Создаем скрытый iframe
     const iframe = document.createElement('iframe');
+
     iframe.style.position = 'fixed';
     iframe.style.right = '0';
     iframe.style.bottom = '0';
     iframe.style.width = '0';
     iframe.style.height = '0';
     iframe.style.border = 'none';
+
     document.body.appendChild(iframe);
 
     const doc = iframe.contentWindow.document;
@@ -565,27 +568,85 @@ function printRouteSheet(showPrices = true) {
     const originalSheet = document.getElementById('route-sheet');
     const sheetClone = originalSheet.cloneNode(true);
 
-    // Удаляем ненужные элементы интерфейса
+    // Удаляем элементы интерфейса
     sheetClone
         .querySelectorAll('.route-actions, .print-btn, .section-title')
         .forEach(el => el.remove());
 
-    // Удаляем выключенные строки
-    sheetClone
-        .querySelectorAll('.route-row.is-disabled-print')
-        .forEach(el => el.remove());
+    // 3. Обрабатываем строки маршрута
+    const specialServices = [
+        'Оформление ЛМК',
+        'Фото',
+        'Гигиеническое обучение'
+    ];
 
-    // Удаляем checkbox
+    sheetClone.querySelectorAll('.route-row').forEach(row => {
+        const checkbox = row.querySelector('.route-toggle');
+        const nameElement = row.querySelector('.route-item-name');
+        const priceCell = row.querySelector('.route-price-cell');
+
+        if (!nameElement) return;
+
+        const serviceName = nameElement.textContent.trim();
+
+        // -----------------------------------------
+        // Удаляем невыбранные услуги
+        // -----------------------------------------
+        if (checkbox && !checkbox.checked) {
+            row.remove();
+            return;
+        }
+
+        // -----------------------------------------
+        // Услуга "Терапевт"
+        // -----------------------------------------
+        if (serviceName === 'Терапевт') {
+            // Создаем пустую строку перед терапевтом
+            const emptyRow = document.createElement('tr');
+            emptyRow.className = 'empty-before-therapist';
+
+            emptyRow.innerHTML = `
+                <td colspan="3">&nbsp;</td>
+            `;
+
+            row.parentNode.insertBefore(emptyRow, row);
+
+            // Жирное название
+            nameElement.style.fontWeight = 'bold';
+
+            // Верхняя черта
+            row.classList.add('therapist-row');
+        }
+
+        // -----------------------------------------
+        // Услуги без цены:
+        // Оформление ЛМК
+        // Фото
+        // Гигиеническое обучение
+        // -----------------------------------------
+        if (specialServices.includes(serviceName)) {
+            row.classList.add('no-price-print');
+
+            if (priceCell) {
+                priceCell.textContent = '';
+            }
+        }
+    });
+
+    // 4. Удаляем checkbox
     sheetClone
         .querySelectorAll('.route-check input')
         .forEach(el => el.remove());
 
-    // Если печать без цен — удаляем колонку "Цена"
+    // 5. Если печать без цен —
+    // удаляем всю колонку "Цена"
     if (!showPrices) {
         sheetClone
             .querySelectorAll('.route-table tr')
             .forEach(row => {
-                const priceCell = row.querySelector('th:last-child, td:last-child');
+                const priceCell = row.querySelector(
+                    'th:last-child, td:last-child'
+                );
 
                 if (priceCell) {
                     priceCell.remove();
@@ -593,14 +654,58 @@ function printRouteSheet(showPrices = true) {
             });
     }
 
-    // 3. Стили для печати
+    if (showPrices) {
+        let printTotal = 0;
+
+        sheetClone.querySelectorAll('.route-row').forEach(row => {
+            const nameElement = row.querySelector('.route-item-name');
+            const priceCell = row.querySelector('.route-price-cell');
+
+            if (!nameElement || !priceCell) return;
+
+            const serviceName = nameElement.textContent.trim();
+
+            if (specialServices.includes(serviceName)) {
+                return;
+            }
+
+            const price = parseFloat(priceCell.dataset.price || 0);
+            printTotal += price;
+        });
+
+        const totalCell = sheetClone.querySelector('.total-price-sum');
+
+        if (totalCell) {
+            totalCell.textContent =
+                printTotal.toLocaleString('ru-RU', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }) + ' ₽';
+        }
+    }
+
+    // 6. Стили для печатной версии
     const style = doc.createElement('style');
+
     style.textContent = `
+        @page {
+            margin: 10mm;
+        }
+
         body {
             margin: 0;
             padding: 0;
             background: #fff;
+            color: #000;
             font-family: sans-serif;
+        }
+
+        .route-sheet-card {
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            border: none;
+            box-shadow: none;
         }
 
         .route-table {
@@ -612,12 +717,13 @@ function printRouteSheet(showPrices = true) {
         .route-table th,
         .route-table td {
             border: 1px solid grey;
-            padding: 1px 3px;
+            padding: 3px 5px;
             vertical-align: top;
-            line-height: 1;
+            line-height: 1.15;
             font-size: 10px;
         }
 
+        /* Кабинет */
         .route-table th:nth-child(1),
         .route-table td:nth-child(1) {
             width: 120px;
@@ -625,6 +731,7 @@ function printRouteSheet(showPrices = true) {
             white-space: nowrap;
         }
 
+        /* Цена */
         .route-table th:nth-child(3),
         .route-table td:nth-child(3) {
             width: 75px;
@@ -632,6 +739,7 @@ function printRouteSheet(showPrices = true) {
             white-space: nowrap;
         }
 
+        /* Обследование */
         .route-table th:nth-child(2),
         .route-table td:nth-child(2) {
             width: auto;
@@ -643,32 +751,78 @@ function printRouteSheet(showPrices = true) {
             color: #333;
         }
 
+        /*
+         * Терапевт:
+         * верхняя граница всей строки
+         */
+        .route-table tr.therapist-row td {
+            border-top: 1px solid #000000c2;
+        }
+
+        /*
+         * Терапевт — название жирным
+         */
+        .route-table tr.therapist-row .route-item-name {
+            font-weight: bold;
+        }
+
+        /*
+         * У служебных услуг цена не показывается.
+         * Само место под колонку остается,
+         * чтобы таблица не "прыгала".
+         */
+        .route-table tr.no-price-print .route-price-cell {
+            font-size: 0;
+        }
+
+        /*
+         * Итог
+         */
         .route-table tfoot td {
             font-weight: bold;
         }
+
+        /*
+         * Не разрывать отдельную услугу
+         * между страницами
+         */
+        .route-table tr {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        .empty-before-therapist td {
+            border: none !important;
+            height: 8px;
+            padding: 0;
+        }
     `;
 
-    // 4. Наполняем iframe данными и стилями
+    // 7. Добавляем стили и таблицу в iframe
     doc.head.appendChild(style);
     doc.body.appendChild(sheetClone);
 
-    // 5. Логика масштабирования по высоте
+    // 8. Масштабирование по высоте
     const targetHeight = window.innerHeight * 0.5;
     const printedSheet = doc.getElementById('route-sheet');
-    const actualHeight = printedSheet.scrollHeight;
 
-    if (actualHeight > targetHeight) {
-        const scale = targetHeight / actualHeight;
-        printedSheet.style.transform = `scale(${scale})`;
-        printedSheet.style.transformOrigin = 'top left';
-        printedSheet.style.width = `${100 / scale}%`;
+    if (printedSheet) {
+        const actualHeight = printedSheet.scrollHeight;
+
+        if (actualHeight > targetHeight) {
+            const scale = targetHeight / actualHeight;
+
+            printedSheet.style.transform = `scale(${scale})`;
+            printedSheet.style.transformOrigin = 'top left';
+            printedSheet.style.width = `${100 / scale}%`;
+        }
     }
 
-    // 6. Вызываем печать внутри iframe
+    // 9. Печать
     iframe.contentWindow.focus();
     iframe.contentWindow.print();
 
-    // Удаляем временный iframe
+    // 10. Удаляем временный iframe
     setTimeout(() => {
         if (iframe.parentNode) {
             iframe.parentNode.removeChild(iframe);
