@@ -124,33 +124,33 @@ require_once __DIR__ . '/../includes/header.php';
 <div class="form-group">
 <label>Серия</label>
 <input type="text" name="document_series"
-       value="<?= e($patient['document_series']) ?>" class="numeric-input" required>
+       value="<?= e($patient['document_series']) ?>" class="numeric-input">
 </div>
 
 <div class="form-group">
 <label>Номер</label>
 <input type="text" name="document_number"
-       value="<?= e($patient['document_number']) ?>" class="numeric-input" required>
+       value="<?= e($patient['document_number']) ?>" class="numeric-input">
 </div>
 </div>
 
 <div class="form-group">
 <label>Кем выдан</label>
 <input type="text" name="document_authority"
-       value="<?= e($patient['document_authority']) ?>" required>
+       value="<?= e($patient['document_authority']) ?>">
 </div>
 
 <div class="row">
 <div class="form-group">
 <label>Код структурного подразделения</label>
 <input type="text" name="document_authority_code"
-       value="<?= e($patient['document_authority_code']) ?>" class="numeric-input" required>
+       value="<?= e($patient['document_authority_code']) ?>" class="numeric-input">
 </div>
 
 <div class="form-group">
 <label>Дата выдачи</label>
 <input type="text" name="document_date"
-       value="<?= formatDate($patient['document_date']) ?>" class="numeric-input" required>
+       value="<?= formatDate($patient['document_date']) ?>" class="numeric-input">
 </div>
 </div>
 
@@ -158,7 +158,7 @@ require_once __DIR__ . '/../includes/header.php';
 <label>СНИЛС</label>
 <input type="text" name="snils" id="snils"
        value="<?= e($patient['snils']) ?>"
-       placeholder="___ ___ ___ __" maxlength="14" inputmode="numeric" required>
+       placeholder="___ ___ ___ __" maxlength="14" inputmode="numeric">
 </div>
 
 <div class="form-group">
@@ -181,7 +181,7 @@ require_once __DIR__ . '/../includes/header.php';
 <div class="form-group">
 <label>Субъект РФ</label>
 <input type="text" name="region"
-       value="<?= e($patient['region']) ?>" required>
+       value="<?= e($patient['region']) ?>">
 </div>
 
 <div class="form-group">
@@ -193,7 +193,7 @@ require_once __DIR__ . '/../includes/header.php';
 <div class="form-group">
 <label>Населенный пункт</label>
 <input type="text" name="locality"
-       value="<?= e($patient['locality']) ?>" required>
+       value="<?= e($patient['locality']) ?>">
 </div>
 </div>
 
@@ -201,13 +201,13 @@ require_once __DIR__ . '/../includes/header.php';
 <div class="form-group">
 <label>Улица</label>
 <input type="text" name="street"
-       value="<?= e($patient['street']) ?>" required>
+       value="<?= e($patient['street']) ?>">
 </div>
 
 <div class="form-group">
 <label>Дом</label>
 <input type="text" name="house"
-       value="<?= e($patient['house']) ?>" required>
+       value="<?= e($patient['house']) ?>">
 </div>
 </div>
 

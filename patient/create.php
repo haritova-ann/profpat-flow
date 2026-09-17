@@ -93,29 +93,29 @@ require_once __DIR__ . '/../includes/header.php';
 <div class="row">
 <div class="form-group">
 <label>Серия</label>
-<input type="text" name="document_series" maxlength="4" class="numeric-input" required>
+<input type="text" name="document_series" maxlength="4" class="numeric-input">
 </div>
 
 <div class="form-group">
 <label>Номер</label>
-<input type="text" name="document_number" maxlength="6" class="numeric-input" required>
+<input type="text" name="document_number" maxlength="6" class="numeric-input">
 </div>
 </div>
 
 <div class="form-group">
 <label>Кем выдан</label>
-<input type="text" name="document_authority" required>
+<input type="text" name="document_authority">
 </div>
 
 <div class="row">
 <div class="form-group">
 <label>Код структурного подразделения</label>
-<input type="text" name="document_authority_code" class="numeric-input" required>
+<input type="text" name="document_authority_code" class="numeric-input">
 </div>
 
 <div class="form-group">
 <label>Дата выдачи</label>
-<input type="text" name="document_date" id="documentDate" placeholder="ДД.ММ.ГГГГ" required>
+<input type="text" name="document_date" id="documentDate" placeholder="ДД.ММ.ГГГГ">
 </div>
 </div>
 
@@ -139,7 +139,7 @@ require_once __DIR__ . '/../includes/header.php';
 <div class="row">
 <div class="form-group">
 <label>Субъект РФ</label>
-<input type="text" name="region" value="Красноярский край" required>
+<input type="text" name="region" value="Красноярский край">
 </div>
 
 <div class="form-group">
@@ -149,19 +149,19 @@ require_once __DIR__ . '/../includes/header.php';
 
 <div class="form-group">
 <label>Населенный пункт</label>
-<input type="text" name="locality" value="г. Красноярск" required>
+<input type="text" name="locality" value="г. Красноярск">
 </div>
 </div>
 
 <div class="row">
 <div class="form-group">
 <label>Улица</label>
-<input type="text" name="street" required>
+<input type="text" name="street">
 </div>
 
 <div class="form-group">
 <label>Дом</label>
-<input type="text" name="house" required>
+<input type="text" name="house">
 </div>
 </div>
 
