@@ -133,11 +133,19 @@ $stmt = $pdo->prepare("
        AND vhf.visit_id = :visit_id
 
     WHERE
-        (r.is_global = TRUE OR vhf.visit_id IS NOT NULL)
-        AND (r.gender IS NULL OR r.gender = :gender)
-        AND (r.min_age IS NULL OR r.min_age <= :age)
-        AND (fr.exam_type IS NULL OR fr.exam_type = :exam_type)
-        AND r.is_active = TRUE
+    (
+        (
+            r.is_global = TRUE
+            AND (r.gender IS NULL OR r.gender = :gender)
+        )
+        OR
+        (
+            vhf.visit_id IS NOT NULL
+        )
+    )
+    AND (r.min_age IS NULL OR r.min_age <= :age)
+    AND (fr.exam_type IS NULL OR fr.exam_type = :exam_type)
+    AND r.is_active = TRUE
 
     GROUP BY
         r.id,
