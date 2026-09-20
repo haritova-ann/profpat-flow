@@ -164,6 +164,21 @@ require_once __DIR__ . '/../includes/header.php';
     </div>
 
     <div class="info-row">
+        <div class="info-label">Тип ценообразования:</div>
+
+        <div class="info-value">
+            <?php
+            $priceMode = [
+                        'default' => 'Общий прайс',
+                        'special' => 'Специальные цены',
+                        'fixed' => 'Фиксированная цена'
+                    ];
+            echo $priceMode[$employer['price_mode']] ?? e($employer['price_mode']);
+            ?>
+        </div>
+    </div>
+
+    <div class="info-row">
         <div class="info-label">Дата создания:</div>
 
         <div class="info-value">
@@ -172,10 +187,18 @@ require_once __DIR__ . '/../includes/header.php';
     </div>
 
     <?php if (hasRole(['admin'])): ?>
+        <div class="row">
         <form action="/employers/delete.php" method="POST" onsubmit="return confirm('Удалить организацию?');">
             <input type="hidden" name="id" value="<?= e($employer['id']) ?>">
             <button type="submit">Удалить</button>
         </form>
+
+        <a href='/admin/prices.php?id=<?= $employer['id'] ?>'>
+            <button type="button">
+                Редактировать цены
+            </button>
+        </a>
+        </div>
     <?php endif; ?>
 
 </div>

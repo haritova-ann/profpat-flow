@@ -51,6 +51,14 @@ try {
     // ======================
     // 3. Работодатель (создание при необходимости)
     // ======================
+    
+    // Значения по умолчанию.
+    $priceMode = 'default';
+    $fixedPrice = null;
+
+    // ----------------------
+    // Новый работодатель
+    // ----------------------
     if (empty($employerId) && !empty($organizationName)) {
 
         $stmt = $pdo->prepare("
@@ -62,7 +70,7 @@ try {
                 :name, :inn, :ogrn, :okvd, :phone, :email,
                 :region, :district, :locality, :street, :house, :building, :flat
             )
-            RETURNING id
+            RETURNING id, price_mode, fixed_price
         ");
 
         $stmt->execute([
@@ -81,8 +89,37 @@ try {
             'flat' => $employerFlat
         ]);
 
-        $employerId = $stmt->fetchColumn();
+        $employer = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        $employerId = $employer['id'];
+        $priceMode = $employer['price_mode'];
+        $fixedPrice = $employer['fixed_price'];
+
+    // ----------------------
+    // Существующий работодатель
+    // ----------------------
+    } elseif (!empty($employerId)) {
+
+        $stmt = $pdo->prepare("
+            SELECT price_mode, fixed_price
+            FROM employers
+            WHERE id = :employer_id
+        ");
+
+        $stmt->execute([
+            'employer_id' => $employerId
+        ]);
+
+        $employer = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$employer) {
+            throw new Exception("Работодатель не найден");
+        }
+
+        $priceMode = $employer['price_mode'];
+        $fixedPrice = $employer['fixed_price'];
     }
+    
     // ======================
     // 4. Вставка визита
     // ======================
@@ -108,7 +145,9 @@ try {
             employer_street,
             employer_house,
             employer_building,
-            employer_flat
+            employer_flat,
+            price_mode,
+            fixed_price
         ) VALUES (
             :patient_id,
             :employer_id,
@@ -130,7 +169,9 @@ try {
             :employer_street,
             :employer_house,
             :employer_building,
-            :employer_flat
+            :employer_flat,
+            :price_mode,
+            :fixed_price
         )
         RETURNING id
     ");
@@ -156,7 +197,9 @@ try {
         'employer_street' => $employerStreet,
         'employer_house' => $employerHouse,
         'employer_building' => $employerBuilding,
-        'employer_flat' => $employerFlat
+        'employer_flat' => $employerFlat,
+        'price_mode' => $priceMode,
+        'fixed_price' => $fixedPrice
     ]);
 
     $visitId = $stmt->fetchColumn();
@@ -228,7 +271,7 @@ try {
     // ======================
     // 7. Возврат в карточку
     // ======================
-    header("Location: /../patient/patient.php?id=" . $patientId);
+    header("Location: /../visit/visit.php?id=" . $visitId);
     exit;
 
 } catch (Exception $e) {

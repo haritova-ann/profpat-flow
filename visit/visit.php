@@ -84,20 +84,73 @@ $stmt = $pdo->prepare("
         rp.price,
         MIN(fr.period_years) AS period_years
     FROM requirements r
+    JOIN visits v ON v.id = :visit_id
     LEFT JOIN LATERAL (
-        SELECT price FROM requirement_prices
-        WHERE requirement_id = r.id
-        ORDER BY valid_from DESC LIMIT 1
-    ) rp ON TRUE
-    LEFT JOIN factor_requirements fr ON fr.requirement_id = r.id
-    LEFT JOIN visit_hazard_factors vhf ON vhf.hazard_factor_id = fr.hazard_factor_id AND vhf.visit_id = :visit_id
-    WHERE (r.is_global = TRUE OR vhf.visit_id IS NOT NULL)
-      AND (r.gender IS NULL OR r.gender = :gender)
-      AND (r.min_age IS NULL OR r.min_age <= :age)
-      AND (fr.exam_type IS NULL OR fr.exam_type = :exam_type)
-      AND r.is_active = TRUE
-    GROUP BY r.id, r.name, r.type, r.room, r.comment, r.sort_order, rp.price
-    ORDER BY r.sort_order, r.name
+        SELECT
+            CASE
+                WHEN v.price_mode = 'special'
+                    THEN COALESCE(
+                        (
+                            SELECT erp.price
+                            FROM employer_requirement_prices erp
+                            WHERE erp.employer_id = v.employer_id
+                            AND erp.requirement_id = r.id
+                            ORDER BY erp.valid_from DESC
+                            LIMIT 1
+                        ),
+                        (
+                            SELECT rp.price
+                            FROM requirement_prices rp
+                            WHERE rp.requirement_id = r.id
+                            ORDER BY rp.valid_from DESC
+                            LIMIT 1
+                        )
+                    )
+
+                            WHEN v.price_mode = 'fixed'
+                                AND r.name NOT IN (
+                                    'Оформление ЛМК',
+                                    'Фото 3х4',
+                                    'Гигиеническое обучение'
+                                )
+                                THEN NULL
+
+                            ELSE (
+                                SELECT rp.price
+                                FROM requirement_prices rp
+                                WHERE rp.requirement_id = r.id
+                                ORDER BY rp.valid_from DESC
+                                LIMIT 1
+                            )
+                        END AS price
+                ) rp ON TRUE
+
+    LEFT JOIN factor_requirements fr
+        ON fr.requirement_id = r.id
+
+    LEFT JOIN visit_hazard_factors vhf
+        ON vhf.hazard_factor_id = fr.hazard_factor_id
+       AND vhf.visit_id = :visit_id
+
+    WHERE
+        (r.is_global = TRUE OR vhf.visit_id IS NOT NULL)
+        AND (r.gender IS NULL OR r.gender = :gender)
+        AND (r.min_age IS NULL OR r.min_age <= :age)
+        AND (fr.exam_type IS NULL OR fr.exam_type = :exam_type)
+        AND r.is_active = TRUE
+
+    GROUP BY
+        r.id,
+        r.name,
+        r.type,
+        r.room,
+        r.comment,
+        r.sort_order,
+        rp.price
+
+    ORDER BY
+        r.sort_order,
+        r.name
 ");
 
 $stmt->execute([
@@ -109,12 +162,17 @@ $stmt->execute([
 
 $routeRequirements = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$totalPrice = 0;
 
-foreach ($routeRequirements as $req) {
-    $totalPrice += (float)($req['price'] ?? 0);
+
+if ($data['price_mode'] === 'fixed') {
+    $totalPrice = (float)$data['fixed_price'];
+} else {
+    $totalPrice = 0;
+
+    foreach ($routeRequirements as $req) {
+        $totalPrice += (float)$req['price'];
+    }
 }
-
 
 // ======================
 // Настраиваем header
@@ -550,7 +608,26 @@ function toggleAll(state) {
 // Печать через изолированный iframe
 // Печать через изолированный iframe
 function printRouteSheet(showPrices = true) {
-    // 1. Создаем скрытый iframe
+    const priceMode = <?= json_encode($data['price_mode']) ?>;
+
+    const fixedPrice = <?= json_encode(
+        $data['fixed_price'] !== null
+            ? (float)$data['fixed_price']
+            : null
+    ) ?>;
+
+    // Услуги, которые относятся к ЛМК,
+    // а не к стоимости медицинского осмотра
+    const lmkServices = [
+        'Оформление ЛМК',
+        'Фото 3х4',
+        'Гигиеническое обучение'
+    ];
+
+    // ---------------------------------------------------------
+    // 1. Создаём скрытый iframe
+    // ---------------------------------------------------------
+
     const iframe = document.createElement('iframe');
 
     iframe.style.position = 'fixed';
@@ -564,7 +641,10 @@ function printRouteSheet(showPrices = true) {
 
     const doc = iframe.contentWindow.document;
 
+    // ---------------------------------------------------------
     // 2. Клонируем маршрутный лист
+    // ---------------------------------------------------------
+
     const originalSheet = document.getElementById('route-sheet');
     const sheetClone = originalSheet.cloneNode(true);
 
@@ -573,118 +653,293 @@ function printRouteSheet(showPrices = true) {
         .querySelectorAll('.route-actions, .print-btn, .section-title')
         .forEach(el => el.remove());
 
-    // 3. Обрабатываем строки маршрута
-    const specialServices = [
-        'Оформление ЛМК',
-        'Фото 3х4',
-        'Гигиеническое обучение'
-    ];
+    // ---------------------------------------------------------
+    // 3. Удаляем старое веб-итого
+    //
+    // Печатная версия должна сама формировать свои итоги.
+    // ---------------------------------------------------------
+
+    sheetClone
+        .querySelectorAll('.total-price-sum')
+        .forEach(el => {
+            const row = el.closest('tr');
+
+            if (row) {
+                row.remove();
+            }
+        });
+
+    // На случай, если итоговая строка имеет отдельный класс
+    sheetClone
+        .querySelectorAll('.total-price-row')
+        .forEach(row => row.remove());
+
+    // ---------------------------------------------------------
+    // 4. Обрабатываем услуги
+    // ---------------------------------------------------------
 
     sheetClone.querySelectorAll('.route-row').forEach(row => {
         const checkbox = row.querySelector('.route-toggle');
         const nameElement = row.querySelector('.route-item-name');
         const priceCell = row.querySelector('.route-price-cell');
 
-        if (!nameElement) return;
+        if (!nameElement) {
+            return;
+        }
 
         const serviceName = nameElement.textContent.trim();
 
-        // -----------------------------------------
-        // Удаляем невыбранные услуги
-        // -----------------------------------------
+        // Отключённые услуги в печать не попадают
         if (checkbox && !checkbox.checked) {
             row.remove();
             return;
         }
 
-        // -----------------------------------------
-        // Услуга "Терапевт"
-        // -----------------------------------------
-        if (serviceName === 'Терапевт') {
-            // Создаем пустую строку перед терапевтом
-            const emptyRow = document.createElement('tr');
-            emptyRow.className = 'empty-before-therapist';
+        // -----------------------------------------------------
+        // Терапевт
+        // -----------------------------------------------------
 
-            emptyRow.innerHTML = `
+        if (serviceName === 'Терапевт') {
+            // Отбивка перед терапевтом
+            const separatorRow = document.createElement('tr');
+
+            separatorRow.className =
+                'separator-before-therapist';
+
+            separatorRow.innerHTML = `
                 <td colspan="3">&nbsp;</td>
             `;
 
-            row.parentNode.insertBefore(emptyRow, row);
+            // Информационная строка
+            const instructionRow = document.createElement('tr');
 
-            // Жирное название
+            instructionRow.className =
+                'instruction-before-therapist';
+
+            instructionRow.innerHTML = `
+                <td colspan="3">
+                    После прохождения кабинетов, перед терапевтом
+                    карту сдать администратору
+                </td>
+            `;
+
+            row.parentNode.insertBefore(
+                separatorRow,
+                row
+            );
+
+            row.parentNode.insertBefore(
+                instructionRow,
+                row
+            );
+
             nameElement.style.fontWeight = 'bold';
 
-            // Верхняя черта
             row.classList.add('therapist-row');
         }
 
-        // -----------------------------------------
-        // Услуги без цены:
-        // Оформление ЛМК
-        // Фото
-        // Гигиеническое обучение
-        // -----------------------------------------
-        if (specialServices.includes(serviceName)) {
-            row.classList.add('no-price-print');
+        // -----------------------------------------------------
+        // ЛМК / фото / обучение
+        // -----------------------------------------------------
 
-            if (priceCell) {
-                priceCell.textContent = '';
-            }
+        if (lmkServices.includes(serviceName)) {
+            row.classList.add('lmk-row');
+        }
+
+        // -----------------------------------------------------
+        // Фиксированная цена
+        //
+        // Обычные услуги медосмотра цену не показывают.
+        // У ЛМК / фото / обучения цены остаются.
+        // -----------------------------------------------------
+
+        if (
+            priceMode === 'fixed' &&
+            !lmkServices.includes(serviceName) &&
+            priceCell
+        ) {
+            priceCell.textContent = '';
         }
     });
 
-    // 4. Удаляем checkbox
+    // ---------------------------------------------------------
+    // 5. Убираем чекбоксы
+    // ---------------------------------------------------------
+
     sheetClone
         .querySelectorAll('.route-check input')
         .forEach(el => el.remove());
 
-    // 5. Если печать без цен —
-    // удаляем всю колонку "Цена"
-    if (!showPrices) {
-        sheetClone
-            .querySelectorAll('.route-table tr')
-            .forEach(row => {
-                const priceCell = row.querySelector(
-                    'th:last-child, td:last-child'
-                );
+    // ---------------------------------------------------------
+    // 6. Считаем две отдельные суммы
+    // ---------------------------------------------------------
 
-                if (priceCell) {
-                    priceCell.remove();
-                }
-            });
-    }
+    let medicalTotal = 0;
+    let lmkTotal = 0;
 
     if (showPrices) {
-        let printTotal = 0;
+        sheetClone
+            .querySelectorAll('.route-row')
+            .forEach(row => {
+                const nameElement =
+                    row.querySelector('.route-item-name');
 
-        sheetClone.querySelectorAll('.route-row').forEach(row => {
-            const nameElement = row.querySelector('.route-item-name');
-            const priceCell = row.querySelector('.route-price-cell');
+                const priceCell =
+                    row.querySelector('.route-price-cell');
 
-            if (!nameElement || !priceCell) return;
+                if (!nameElement || !priceCell) {
+                    return;
+                }
 
-            const serviceName = nameElement.textContent.trim();
+                const serviceName =
+                    nameElement.textContent.trim();
 
-            if (specialServices.includes(serviceName)) {
-                return;
-            }
+                const price = parseFloat(
+                    priceCell.dataset.price || 0
+                );
 
-            const price = parseFloat(priceCell.dataset.price || 0);
-            printTotal += price;
-        });
+                // ЛМК / фото / обучение
+                if (lmkServices.includes(serviceName)) {
+                    lmkTotal += price;
+                    return;
+                }
 
-        const totalCell = sheetClone.querySelector('.total-price-sum');
+                // В fixed стоимость медосмотра
+                // берём из сохранённого значения визита
+                if (priceMode !== 'fixed') {
+                    medicalTotal += price;
+                }
+            });
 
-        if (totalCell) {
-            totalCell.textContent =
-                printTotal.toLocaleString('ru-RU', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                }) + ' ₽';
+        // В fixed режиме стоимость медосмотра
+        // = зафиксированная стоимость визита
+        if (priceMode === 'fixed') {
+            medicalTotal = fixedPrice || 0;
         }
     }
 
-    // 6. Стили для печатной версии
+    // ---------------------------------------------------------
+    // 7. Убираем колонку цен, если печать без цен
+    // ---------------------------------------------------------
+
+    // Третью колонку НЕ удаляем.
+    // Сохраняем исходную структуру таблицы,
+    // просто очищаем содержимое ценовых ячеек.
+    // ---------------------------------------------------------
+
+    if (!showPrices) {
+        sheetClone
+            .querySelectorAll('.route-price-cell')
+            .forEach(cell => {
+                cell.textContent = '';
+            });
+    }
+
+    // ---------------------------------------------------------
+    // 8. Первое Итого — сразу после терапевта
+    // ---------------------------------------------------------
+
+    if (showPrices) {
+        const therapistRow =
+            sheetClone.querySelector('.therapist-row');
+
+        if (therapistRow) {
+            const medicalTotalRow =
+                document.createElement('tr');
+
+            medicalTotalRow.className =
+                'medical-total-row';
+
+            medicalTotalRow.innerHTML = `
+                <td colspan="2" style="text-align: right;">
+                    Итого
+                </td>
+
+                <td class="route-price-cell">
+                    ${medicalTotal.toLocaleString('ru-RU', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    })} ₽
+                </td>
+            `;
+
+            therapistRow.parentNode.insertBefore(
+                medicalTotalRow,
+                therapistRow.nextSibling
+            );
+        }
+    }
+
+    // ---------------------------------------------------------
+    // 9. Отбивка перед ЛМК
+    //
+    // Она нужна и с ценами, и без цен.
+    // ---------------------------------------------------------
+
+    const firstLmkRow =
+        sheetClone.querySelector('.lmk-row');
+
+    if (firstLmkRow) {
+        const separatorRow =
+            document.createElement('tr');
+
+        separatorRow.className =
+            'separator-before-lmk';
+
+        separatorRow.innerHTML = `
+            <td colspan="${showPrices ? 3 : 2}">
+                &nbsp;
+            </td>
+        `;
+
+        firstLmkRow.parentNode.insertBefore(
+            separatorRow,
+            firstLmkRow
+        );
+    }
+
+    // ---------------------------------------------------------
+    // 10. Второе Итого — после последней услуги ЛМК
+    // ---------------------------------------------------------
+
+    if (showPrices) {
+        const lmkRows =
+            sheetClone.querySelectorAll('.lmk-row');
+
+        if (lmkRows.length > 0) {
+            const lastLmkRow =
+                lmkRows[lmkRows.length - 1];
+
+            const lmkTotalRow =
+                document.createElement('tr');
+
+            lmkTotalRow.className =
+                'lmk-total-row';
+
+            lmkTotalRow.innerHTML = `
+                <td colspan="2" style="text-align: right;">
+                    Итого
+                </td>
+
+                <td class="route-price-cell">
+                    ${lmkTotal.toLocaleString('ru-RU', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    })} ₽
+                </td>
+            `;
+
+            lastLmkRow.parentNode.insertBefore(
+                lmkTotalRow,
+                lastLmkRow.nextSibling
+            );
+        }
+    }
+
+    // ---------------------------------------------------------
+    // 11. Стили печати
+    // ---------------------------------------------------------
+
     const style = doc.createElement('style');
 
     style.textContent = `
@@ -723,7 +978,6 @@ function printRouteSheet(showPrices = true) {
             font-size: 10px;
         }
 
-        /* Кабинет */
         .route-table th:nth-child(1),
         .route-table td:nth-child(1) {
             width: 120px;
@@ -731,7 +985,6 @@ function printRouteSheet(showPrices = true) {
             white-space: nowrap;
         }
 
-        /* Цена */
         .route-table th:nth-child(3),
         .route-table td:nth-child(3) {
             width: 75px;
@@ -739,7 +992,6 @@ function printRouteSheet(showPrices = true) {
             white-space: nowrap;
         }
 
-        /* Обследование */
         .route-table th:nth-child(2),
         .route-table td:nth-child(2) {
             width: auto;
@@ -751,78 +1003,113 @@ function printRouteSheet(showPrices = true) {
             color: #333;
         }
 
-        /*
-         * Терапевт:
-         * верхняя граница всей строки
-         */
-        .route-table tr.therapist-row td {
-            border-top: 1px solid #000000c2;
-        }
+        /* -----------------------------------------
+           Отбивка перед терапевтом
+        ----------------------------------------- */
 
-        /*
-         * Терапевт — название жирным
-         */
-        .route-table tr.therapist-row .route-item-name {
-            font-weight: bold;
-        }
-
-        /*
-         * У служебных услуг цена не показывается.
-         * Само место под колонку остается,
-         * чтобы таблица не "прыгала".
-         */
-        .route-table tr.no-price-print .route-price-cell {
-            font-size: 0;
-        }
-
-        /*
-         * Итог
-         */
-        .route-table tfoot td {
-            font-weight: bold;
-        }
-
-        /*
-         * Не разрывать отдельную услугу
-         * между страницами
-         */
-        .route-table tr {
-            break-inside: avoid;
-            page-break-inside: avoid;
-        }
-
-        .empty-before-therapist td {
+        .separator-before-therapist td {
             border: none !important;
             height: 8px;
             padding: 0;
         }
+
+        /* -----------------------------------------
+           Информационная строка перед терапевтом
+        ----------------------------------------- */
+
+        .instruction-before-therapist td {
+            border: none !important;
+            padding: 6px 5px 8px;
+            font-size: 11px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        /* -----------------------------------------
+           Терапевт
+        ----------------------------------------- */
+
+        .route-table tr.therapist-row td {
+            border-top: 1px solid #000000c2;
+        }
+
+        .route-table tr.therapist-row .route-item-name {
+            font-weight: bold;
+        }
+
+        /* -----------------------------------------
+           Отбивка перед ЛМК
+        ----------------------------------------- */
+
+        .separator-before-lmk td {
+            border: none !important;
+            height: 8px;
+            padding: 0;
+        }
+
+        /* -----------------------------------------
+           Итоги
+        ----------------------------------------- */
+
+        .medical-total-row td,
+        .lmk-total-row td {
+            font-weight: bold;
+            border-top: 1px solid #000;
+            padding-top: 5px;
+            padding-bottom: 5px;
+        }
+
+        .medical-total-row td:last-child,
+        .lmk-total-row td:last-child {
+            text-align: right;
+        }
+
+        /* -----------------------------------------
+           Не разрываем строки между страницами
+        ----------------------------------------- */
+
+        .route-table tr {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
     `;
 
-    // 7. Добавляем стили и таблицу в iframe
     doc.head.appendChild(style);
     doc.body.appendChild(sheetClone);
 
-    // 8. Масштабирование по высоте
-    const targetHeight = window.innerHeight * 0.5;
-    const printedSheet = doc.getElementById('route-sheet');
+    // ---------------------------------------------------------
+    // 12. Масштаб печати
+    //
+    // 100% в диалоге печати ≈ нынешние 150%.
+    // ---------------------------------------------------------
+
+    const printedSheet =
+        doc.getElementById('route-sheet');
 
     if (printedSheet) {
-        const actualHeight = printedSheet.scrollHeight;
+        const printScale = 0.95;
 
-        if (actualHeight > targetHeight) {
-            const scale = targetHeight / actualHeight;
+        printedSheet.style.transform =
+            `scale(${printScale})`;
 
-            printedSheet.style.transform = `scale(${scale})`;
-            printedSheet.style.transformOrigin = 'top left';
-            printedSheet.style.width = `${100 / scale}%`;
-        }
+        printedSheet.style.transformOrigin =
+            'top left';
+
+        printedSheet.style.width =
+            `${100 / printScale}%`;
     }
 
-    // 9. Печать
+    // ---------------------------------------------------------
+    // 13. Печать
+    // ---------------------------------------------------------
+
     iframe.contentWindow.focus();
     iframe.contentWindow.print();
 
-    // 10. Удаляем временный iframe
+    // ---------------------------------------------------------
+    // 14. Удаляем iframe
+    // ---------------------------------------------------------
+
     setTimeout(() => {
         if (iframe.parentNode) {
             iframe.parentNode.removeChild(iframe);
