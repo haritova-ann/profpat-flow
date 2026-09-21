@@ -151,14 +151,14 @@ try {
     $templateProcessor->setValue('PSYCHIATRIC_FACTORS_NAME', $data['psychiatric_factors_name'] ?? '');
     
     // Данные работодателя
-    $templateProcessor->setValue('ORGANIZATION_NAME', $data['organization_name'] ?? '');
-    $templateProcessor->setValue('ORGANIZATION_DEPARTMENT', $data['organization_department'] ?? '');
-    $templateProcessor->setValue('POSITION', $data['position'] ?? '');
+    $templateProcessor->setValue('ORGANIZATION_NAME', escapeXml($data['organization_name']) ?? '');
+    $templateProcessor->setValue('ORGANIZATION_DEPARTMENT', escapeXml($data['organization_department']) ?? '');
+    $templateProcessor->setValue('POSITION', escapeXml($data['position']) ?? '');
     $templateProcessor->setValue('INN', $data['inn'] ?? '');
     $templateProcessor->setValue('OGRN', $data['ogrn'] ?? '');
     $templateProcessor->setValue('OKVD', $data['okvd'] ?? '');
     $templateProcessor->setValue('EMPLOYER_PHONE', $data['employer_phone'] ?? '');
-    $templateProcessor->setValue('EMPLOYER_EMAIL', $data['employer_email'] ?? '');
+    $templateProcessor->setValue('EMPLOYER_EMAIL', escapeXml($data['employer_email']) ?? '');
     $templateProcessor->setValue('EMPLOYER_ADDRESS', formatEmployerAddress($data));
 
     // ======================

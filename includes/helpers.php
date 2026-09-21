@@ -185,3 +185,8 @@ function formatGynecology(array $json): string
 
     return trim($date . ' Гинеколог ' . $result);
 }
+
+function escapeXml(string $value): string
+{
+    return htmlspecialchars($value, ENT_XML1 | ENT_QUOTES, 'UTF-8');
+}
