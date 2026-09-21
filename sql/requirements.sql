@@ -39,3 +39,36 @@ INSERT INTO requirements (name, type, is_global, min_age, gender) VALUES
 ('Исследование уровня дельта аминолевулиновой кислоты или копропорфирина в моче', 'lab', FALSE, NULL, NULL),
 ('Оформление ЛМК', 'exam', FALSE, NULL, NULL),
 ('Гигиеническое обучение', 'exam', FALSE, NULL, NULL);
+
+INSERT INTO requirements (name, type, is_global, min_age, gender) VALUES
+('Фото 3х4', 'exam', FALSE, NULL, NULL),
+('Психиатрическое освидетельствование', 'exam', FALSE, NULL, NULL),
+('Профпатолог', 'exam', TRUE, NULL, NULL);
+
+ALTER TABLE requirements
+ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT TRUE;
+
+
+UPDATE requirements
+SET is_active = FALSE
+WHERE name = 'Исследование уровня дельта аминолевулиновой кислоты или копропорфирина в моче';
+
+UPDATE requirements
+SET is_active = FALSE
+WHERE name = 'УЗИ щитовидной железы';
+
+UPDATE requirements
+SET is_active = FALSE
+WHERE name = 'Исследование уровня метгемоглобина в крови';
+
+UPDATE requirements
+SET is_active = FALSE
+WHERE name = 'Мазок на гонорею';
+
+UPDATE requirements
+SET is_active = FALSE
+WHERE name = 'Рентгенография длинных трубчатых костей (фтор и его соединения)';
+
+UPDATE requirements
+SET is_active = FALSE
+WHERE name = 'Профпатолог';

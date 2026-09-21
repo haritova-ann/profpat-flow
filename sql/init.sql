@@ -18,7 +18,7 @@ CREATE TABLE patients (
     document_authority TEXT,
     document_authority_code TEXT,
     document_date TEXT,
-    snils TEXT UNIQUE,
+    snils TEXT,
 
     phone_number TEXT,
     email TEXT,
@@ -125,6 +125,8 @@ CREATE TABLE employers (
     house TEXT,
     building TEXT,
     flat TEXT,
+    price_mode VARCHAR(50) CHECK (price_mode IN ('default', 'special', 'fixed')),
+    fixed_price INT,
     created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -195,6 +197,30 @@ CREATE TABLE requirement_prices (
     UNIQUE (requirement_id, valid_from)
 );
 
+
+-- ======================
+-- Справочник специальных цен
+-- ======================
+CREATE TABLE employer_requirement_prices (
+    id SERIAL PRIMARY KEY,
+
+    employer_id INT NOT NULL
+        REFERENCES employers(id)
+        ON DELETE CASCADE,
+
+    requirement_id INT NOT NULL
+        REFERENCES requirements(id)
+        ON DELETE CASCADE,
+
+    price NUMERIC(10,2) NOT NULL
+        CHECK (price >= 0),
+
+    valid_from DATE NOT NULL DEFAULT CURRENT_DATE,
+
+    created_at TIMESTAMP DEFAULT NOW(),
+
+    UNIQUE (employer_id, requirement_id, valid_from)
+);
 -- ======================
 -- Справочник врачей / членов ВК
 -- ======================
