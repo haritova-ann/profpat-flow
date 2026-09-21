@@ -632,6 +632,11 @@ function printRouteSheet(showPrices = true) {
         'Гигиеническое обучение'
     ];
 
+    const boldServices = [
+    'Исследование крови на брюшной тиф',
+    'Анализ крови на HBs-Ag, анти-HBc-Ig (суммарные), анти-HCV-Ig (суммарные), ВИЧ'
+];
+
     // ---------------------------------------------------------
     // 1. Создаём скрытый iframe
     // ---------------------------------------------------------
@@ -745,6 +750,13 @@ function printRouteSheet(showPrices = true) {
 
             row.classList.add('therapist-row');
         }
+        
+        // -----------------------------------------------------
+        // Профпатолог
+        // -----------------------------------------------------
+        if (serviceName === 'Профпатолог') {
+            row.classList.add('profpathologist-row');
+        }
 
         // -----------------------------------------------------
         // ЛМК / фото / обучение
@@ -768,7 +780,30 @@ function printRouteSheet(showPrices = true) {
         ) {
             priceCell.textContent = '';
         }
+
+        // ---------------------------------------------------------
+        // Перемещаем профпатолога перед услугами ЛМК
+        // ---------------------------------------------------------
+
+        const profpathologistRow =
+            sheetClone.querySelector('.profpathologist-row');
+
+        const firstLmkRow =
+            sheetClone.querySelector('.lmk-row');
+
+        if (profpathologistRow && firstLmkRow) {
+            firstLmkRow.parentNode.insertBefore(
+                profpathologistRow,
+                firstLmkRow
+            );
+        }
+
+        if (boldServices.includes(serviceName)) {
+        nameElement.style.fontWeight = 'bold';
+        }
+
     });
+
 
     // ---------------------------------------------------------
     // 5. Убираем чекбоксы
@@ -844,14 +879,14 @@ function printRouteSheet(showPrices = true) {
     }
 
     // ---------------------------------------------------------
-    // 8. Первое Итого — сразу после терапевта
+    // 8. Первое Итого — сразу после профпатолога
     // ---------------------------------------------------------
 
     if (showPrices) {
-        const therapistRow =
-            sheetClone.querySelector('.therapist-row');
+        const profpathologistRow =
+            sheetClone.querySelector('.profpathologist-row');
 
-        if (therapistRow) {
+        if (profpathologistRow) {
             const medicalTotalRow =
                 document.createElement('tr');
 
@@ -871,9 +906,9 @@ function printRouteSheet(showPrices = true) {
                 </td>
             `;
 
-            therapistRow.parentNode.insertBefore(
+            profpathologistRow.parentNode.insertBefore(
                 medicalTotalRow,
-                therapistRow.nextSibling
+                profpathologistRow.nextSibling
             );
         }
     }
@@ -895,7 +930,7 @@ function printRouteSheet(showPrices = true) {
             'separator-before-lmk';
 
         separatorRow.innerHTML = `
-            <td colspan="${showPrices ? 3 : 2}">
+            <td colspan="3">
                 &nbsp;
             </td>
         `;
@@ -952,7 +987,7 @@ function printRouteSheet(showPrices = true) {
 
     style.textContent = `
         @page {
-            margin: 10mm;
+            margin: 3mm;
         }
 
         body {
@@ -980,10 +1015,10 @@ function printRouteSheet(showPrices = true) {
         .route-table th,
         .route-table td {
             border: 1px solid grey;
-            padding: 3px 5px;
+            padding: 2px 2px;
             vertical-align: top;
             line-height: 1.15;
-            font-size: 10px;
+            font-size: 12px;
         }
 
         .route-table th:nth-child(1),
@@ -1017,7 +1052,7 @@ function printRouteSheet(showPrices = true) {
 
         .separator-before-therapist td {
             border: none !important;
-            height: 8px;
+            height: 3px;
             padding: 0;
         }
 
@@ -1027,8 +1062,8 @@ function printRouteSheet(showPrices = true) {
 
         .instruction-before-therapist td {
             border: none !important;
-            padding: 6px 5px 8px;
-            font-size: 11px;
+            padding: 0px 0px 0px;
+            font-size: 14px;
             font-weight: bold;
             text-align: center;
         }
@@ -1051,7 +1086,7 @@ function printRouteSheet(showPrices = true) {
 
         .separator-before-lmk td {
             border: none !important;
-            height: 8px;
+            height: 3px;
             padding: 0;
         }
 
@@ -1063,8 +1098,8 @@ function printRouteSheet(showPrices = true) {
         .lmk-total-row td {
             font-weight: bold;
             border-top: 1px solid #000;
-            padding-top: 5px;
-            padding-bottom: 5px;
+            padding-top: 3px;
+            padding-bottom: 3px;
         }
 
         .medical-total-row td:last-child,
@@ -1095,7 +1130,7 @@ function printRouteSheet(showPrices = true) {
         doc.getElementById('route-sheet');
 
     if (printedSheet) {
-        const printScale = 0.95;
+        const printScale = 0.90;
 
         printedSheet.style.transform =
             `scale(${printScale})`;
