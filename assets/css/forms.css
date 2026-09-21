@@ -683,3 +683,20 @@ font-weight: bold;
 .print-btn:hover {
     background: #1d5ddd;
 }
+
+.psychiatric-row {
+    justify-content: center;
+}
+
+.psychiatric-row .info-value {
+    display: flex;
+    align-items: center;
+    justify-content: left;
+    gap: 10px;
+    width: auto;
+}
+
+.psychiatric-print-btn {
+    width: fit-content;
+    padding: 4px 8px;
+}

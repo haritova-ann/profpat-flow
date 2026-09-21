@@ -170,7 +170,55 @@ $stmt->execute([
 
 $routeRequirements = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+$stmt = $pdo->prepare("
+    SELECT
+        r.id,
+        r.name,
+        rp.price
+    FROM requirements r
+    JOIN visits v ON v.id = :visit_id
 
+    LEFT JOIN LATERAL (
+        SELECT
+            CASE
+                WHEN v.price_mode = 'special'
+                    THEN COALESCE(
+                        (
+                            SELECT erp.price
+                            FROM employer_requirement_prices erp
+                            WHERE erp.employer_id = v.employer_id
+                              AND erp.requirement_id = r.id
+                            ORDER BY erp.valid_from DESC
+                            LIMIT 1
+                        ),
+                        (
+                            SELECT rp.price
+                            FROM requirement_prices rp
+                            WHERE rp.requirement_id = r.id
+                            ORDER BY rp.valid_from DESC
+                            LIMIT 1
+                        )
+                    )
+
+                ELSE (
+                    SELECT rp.price
+                    FROM requirement_prices rp
+                    WHERE rp.requirement_id = r.id
+                    ORDER BY rp.valid_from DESC
+                    LIMIT 1
+                )
+            END AS price
+    ) rp ON TRUE
+
+    WHERE r.id = 42
+      AND r.is_active = TRUE
+");
+
+$stmt->execute([
+    'visit_id' => $visitId
+]);
+
+$psychiatricService = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if ($data['price_mode'] === 'fixed') {
     $totalPrice = (float)$data['fixed_price'];
@@ -307,10 +355,21 @@ require_once __DIR__ . '/../includes/header.php';
                 <div class="info-value"><?= e($data['hazard_factors']) ?></div>
             </div>
             
-            <div class="info-row">
-                <div class="info-label">ОПО: </div>
+            <div class="info-row psychiatric-row">
+                <div class="info-label">ОПО:</div>
+
                 <div class="info-value">
                     <?= $data['psychiatric_exam'] ? 'Требуется' : 'Не требуется' ?>
+
+                    <?php if ($data['psychiatric_exam']): ?>
+                        <button
+                            type="button"
+                            class="print-btn psychiatric-print-btn"
+                            onclick="printPsychiatricCertificate()"
+                        >
+                            Справка об оплате ПО
+                        </button>
+                    <?php endif; ?>
                 </div>
             </div>
             
@@ -1444,6 +1503,191 @@ function printCertificate() {
             }
         }, 1000);
 
+    }, 100);
+}
+
+function printPsychiatricCertificate() {
+    // 1. Создаём скрытый iframe для печати
+    const iframe = document.createElement('iframe');
+
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = 'none';
+
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow.document;
+
+    // 2. Создаём справку
+    const certificate = doc.createElement('div');
+    certificate.className = 'payment-certificate';
+
+    // 3. Шапка справки
+    certificate.innerHTML = `
+        <h1>Общество с ограниченной ответственностью</h1>
+        <h1>«Центр квантовой медицины №1»</h1>
+
+        <p>660048, Россия, Красноярский край,</p>
+        <p>г. Красноярск, ул. Калинина, 41</p>
+        <p>ОГРН 1032401796250</p>
+        <p>ИНН 2460060098/КПП 246001001 тел: 296-511</p>
+        <p>факс: 2913-009</p>
+
+        <p class="city">г. Красноярск</p>
+
+        <h1>Справка об оплате услуг</h1>
+
+        <div class="patient-info">
+            Выдана (Ф.И.О.)
+            <strong>
+                <?= e($data['last_name']) ?>
+                <?= e($data['first_name']) ?>
+                <?= e($data['middle_name']) ?>
+            </strong>
+        </div>
+
+        <p class="description">
+            В том, что он (она) оплатил(а) медицинскую услугу:
+        </p>
+
+        <table class="service-table">
+            <thead>
+                <tr>
+                    <th>Наименование услуги</th>
+                    <th>Стоимость</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><?= e($psychiatricService['name']) ?></td>
+                    <td>
+                        <?= number_format((float)$psychiatricService['price'], 2, ',', ' ') ?> руб.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="signature-block">
+            <div class="signature-row">
+                <span>Генеральный директор ООО «ЦКМ №1»</span>
+                <span class="signature-line"></span>
+                <span>Н. Н. Шломов</span>
+            </div>
+        </div>
+    `;
+
+    // 4. Стили только для печатной версии
+    const style = doc.createElement('style');
+
+    style.textContent = `
+        @page {
+            size: A4;
+            margin: 15mm;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #fff;
+            color: #000;
+            font-family: "Times New Roman", serif;
+            font-size: 14px;
+        }
+
+        .payment-certificate {
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 18px;
+            margin: 0 0 10px 0;
+        }
+
+        p {
+            text-align: center;
+            font-size: 14px;
+            margin: 0 0 2px 0;
+        }
+
+        .city {
+            text-align: left;
+            margin-top: 20px;
+        }
+
+        .patient-info {
+            font-size: 18px;
+            margin: 25px 0;
+            line-height: 1.6;
+        }
+
+        .description {
+            text-align: left;
+            margin: 0 0 15px 0;
+        }
+
+        .service-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .service-table th,
+        .service-table td {
+            border: 1px solid #000;
+            padding: 6px;
+            vertical-align: top;
+        }
+
+        .service-table th:first-child,
+        .service-table td:first-child {
+            text-align: left;
+        }
+
+        .service-table th:last-child,
+        .service-table td:last-child {
+            width: 100px;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .signature-block {
+            margin-top: 50px;
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        .signature-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .signature-line {
+            display: inline-block;
+            width: 150px;
+            border-bottom: 1px solid #000;
+        }
+    `;
+
+    // 5. Добавляем стили и справку в iframe
+    doc.head.appendChild(style);
+    doc.body.appendChild(certificate);
+
+    // 6. Печатаем
+    iframe.contentWindow.focus();
+
+    setTimeout(() => {
+        iframe.contentWindow.print();
+
+        setTimeout(() => {
+            if (iframe.parentNode) {
+                iframe.parentNode.removeChild(iframe);
+            }
+        }, 1000);
     }, 100);
 }
 </script>
