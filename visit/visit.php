@@ -442,7 +442,10 @@ require_once __DIR__ . '/../includes/header.php';
                 </thead>
                 <tbody>
                     <?php foreach ($routeRequirements as $req): ?>
-                        <tr class="route-row">
+                        <tr
+                            class="route-row"
+                            data-req-id="<?= $req['id'] ?>"
+                        >
                             <td>
                                 <?php if ($req['is_added_manually']): ?>
 
@@ -503,8 +506,20 @@ require_once __DIR__ . '/../includes/header.php';
                 Печать маршрутного листа без цен
             </button>
             <p>
-                
-            <button class="print-btn" onclick="printCertificate()">Печать справки об оплате</button>
+             
+            <div class="print-buttons">
+            <button class="print-btn" onclick="printCertificate('medical')">
+                Справка об оплате медосмотра
+            </button>
+
+            <button class="print-btn" onclick="printCertificate('lmk')">
+                Справка об оплате ЛМК
+            </button>
+
+            <button class="print-btn" onclick="printCertificate('hygiene')">
+                Справка об оплате гигиенического обучения
+            </button>
+            </div>
         </div>
                 
         <!-- ======================
@@ -675,9 +690,6 @@ document.querySelectorAll('.route-toggle').forEach(cb => {
         const row = this.closest('.route-row');
         if (row) row.style.opacity = this.checked ? 1 : 0.4;
         
-        const visitId = <?= (int)$visitId ?>;
-        const priceMode = <?= json_encode($data['price_mode']) ?>;
-        const fixedPrice = <?= json_encode((float)($data['fixed_price'] ?? 0)) ?>;
         recalcTotal();
 
         fetch('/visit/update_completed.php', {
@@ -695,6 +707,9 @@ document.querySelectorAll('.route-toggle').forEach(cb => {
 const visitId = <?= (int)$visitId ?>;
 const priceMode = <?= json_encode($data['price_mode']) ?>;
 const fixedPrice = <?= json_encode((float)($data['fixed_price'] ?? 0)) ?>;
+const exceptionRequirementIds = [39, 40, 41];
+const lmkPhotoIds = [39, 40];
+const hygieneId = 41;
 const addButton = document.getElementById('add-requirement');
 const addForm = document.getElementById('add-requirement-form');
 const searchInput = document.getElementById('requirement-search');
@@ -1357,7 +1372,7 @@ function printRouteSheet(showPrices = true) {
     }, 1000);
 }
 
-function printCertificate() {
+function printCertificate(type) {
     // 1. Создаём скрытый iframe для печати
     const iframe = document.createElement('iframe');
 
@@ -1388,7 +1403,7 @@ function printCertificate() {
 
         <p><style = text-align: left> г. Красноярск  </style></p>
 
-        <h1>Справка об оплате услуг медицинского осмотра</h1>
+        <h1>Справка об оплате услуг</h1>
 
         <div class="patient-info">
             <div>
@@ -1424,6 +1439,33 @@ function printCertificate() {
         .querySelectorAll('.route-row.is-disabled-print')
         .forEach(el => el.remove());
 
+        sheetClone.querySelectorAll('.route-row').forEach(row => {
+            const id = Number(row.dataset.reqId);
+
+            if (
+                (type === 'medical' && [39, 40, 41].includes(id)) ||
+                (type === 'lmk' && ![39, 41].includes(id)) ||
+                (type === 'hygiene' && id !== 40)
+            ) {
+                row.remove();
+            }
+        });
+        sheetClone.querySelector('.route-table tfoot')?.remove();
+
+        let total = 0;
+
+        sheetClone.querySelectorAll('.route-row').forEach(row => {
+            const priceCell = row.querySelector('.route-price-cell');
+
+            if (!priceCell) return;
+
+            total += parseFloat(priceCell.dataset.price || 0);
+        });
+
+        if (type === 'medical' && priceMode === 'fixed') {
+            total = fixedPrice || 0;
+        }
+
     // 7. Удаляем checkbox и label вокруг него,
     // но оставляем название кабинета на этом этапе
     sheetClone
@@ -1449,6 +1491,17 @@ function printCertificate() {
     }
 
     // 10. Добавляем очищенный маршрутный лист в справку
+    const totalRow = doc.createElement('div');
+
+    totalRow.className = 'certificate-total';
+
+    totalRow.textContent =
+        `Итого: ${total.toLocaleString('ru-RU', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        })} ₽`;
+
+    sheetClone.appendChild(totalRow);
     certificate.appendChild(sheetClone);
 
     // 11. Блок подписи и печати
@@ -1622,6 +1675,13 @@ function printCertificate() {
             text-align: center;
             padding-top: 20px;
         }
+
+        .certificate-total {
+            margin-top: 8px;
+            text-align: right;
+            font-size: 16px;
+            font-weight: bold;
+        }
     `;
 
     // 13. Добавляем стили и документ в iframe
@@ -1676,7 +1736,7 @@ function printPsychiatricCertificate() {
 
         <p class="city">г. Красноярск</p>
 
-        <h1>Справка об оплате услуг</h1>
+        <h1>Справка об оплате психиатрического освидетельствования</h1>
 
         <div class="patient-info">
             Выдана (Ф.И.О.)

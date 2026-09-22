@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title><?= e($pageTitle ?? 'МИС') ?></title>
 
-    <link rel="stylesheet" href="/assets/css/app.css">
+    <link rel="stylesheet" href="/assets/css/app.css?v=<?= filemtime(__DIR__ . '/../assets/css/app.css') ?>">
 </head>
 
 <body>
