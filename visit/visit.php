@@ -1046,7 +1046,7 @@ function printRouteSheet(showPrices = true) {
 
     style.textContent = `
         @page {
-            margin: 3mm;
+            margin: 8mm;
         }
 
         body {
