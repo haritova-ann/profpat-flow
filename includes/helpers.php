@@ -139,6 +139,10 @@ function formatIdentityDocument(array $data): string {
     if (!empty($data['document_authority'])) {
         $authorityParts[] = trim($data['document_authority']);
     }
+
+    if (!empty($data['document_authority'])) {
+        $authorityParts[] = trim($data['document_authority_code']);
+    }
     
     if (!empty($data['document_date'])) {
         // Переводим дату из YYYY-MM-DD в человеческий формат DD.MM.YYYY
