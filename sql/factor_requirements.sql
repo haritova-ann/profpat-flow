@@ -936,3 +936,20 @@ INSERT INTO factor_requirements (hazard_factor_id, requirement_id, period_years,
 ( '216', '28', '1', 'preliminary'),
 ( '217', '28', '1', 'preliminary'),
 ( '218', '28', '1', 'preliminary'),
+
+
+INSERT INTO factor_requirements (hazard_factor_id, requirement_id, period_years, exam_type) VALUES
+( '219', '17', '2', NULL),	
+( '219', '13', '2', NULL),	
+( '219', '16', '2', NULL),	
+( '219', '18', '2', NULL),	
+( '219', '22', '2', NULL),	
+( '219', '23', '2', NULL),	
+( '219', '15', '2', NULL),	
+( '219', '14', '2', NULL),	
+( '219', '32', '2', NULL),
+( '220', '16', '2', NULL),	
+( '220', '13', '2', NULL),	
+( '220', '15', '2', NULL),	
+( '220', '14', '2', NULL),	
+( '220', '31', '2', NULL);

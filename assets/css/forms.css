@@ -700,3 +700,49 @@ font-weight: bold;
     width: fit-content;
     padding: 4px 8px;
 }
+
+.manual-requirement {
+    text-align: left;
+}
+
+.delete-requirement {
+    width: 13px;
+    height: 13px;
+    padding: 0;
+    margin: 0 3px 0 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    color: #dc2626;
+    font: inherit;
+    font-weight: bold;
+    line-height: 13px;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+.delete-requirement:hover {
+    background: none;
+    color: #b91c1c;
+}
+
+.route-room {
+    font-size: 14px;
+    color: #666;
+}
+
+.requirement-results {
+    max-width: 500px;
+    margin-top: 6px;
+    border: 1px solid #ccc;
+    background: white;
+}
+
+.requirement-option {
+    padding: 8px 10px;
+    cursor: pointer;
+}
+
+.requirement-option:hover {
+    background: #f2f2f2;
+}

@@ -157,6 +157,29 @@ CREATE TABLE factor_requirements (
 );
 
 -- ======================
+-- Связь визит - услуги
+-- ======================
+CREATE TABLE visit_requirements (
+    id SERIAL PRIMARY KEY,
+
+    visit_id INT NOT NULL
+        REFERENCES visits(id)
+        ON DELETE CASCADE,
+
+    requirement_id INT NOT NULL
+        REFERENCES requirements(id)
+        ON DELETE RESTRICT,
+
+    is_selected BOOLEAN NOT NULL DEFAULT TRUE,
+    is_added_manually BOOLEAN NOT NULL DEFAULT FALSE,
+
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+
+    UNIQUE (visit_id, requirement_id)
+);
+
+-- ======================
 -- Санаторно-курортное лечение
 -- ======================
 CREATE TABLE patient_documents (
@@ -344,3 +367,6 @@ CREATE INDEX idx_visit_hazard_visit
         visit_id,
         hazard_factor_id
     );
+
+CREATE INDEX idx_visit_requirements_visit
+ON visit_requirements (visit_id);

@@ -79,12 +79,21 @@ $age = (new DateTime($data['birth_date']))
 // ======================
 
 $stmt = $pdo->prepare("
-    SELECT 
-        r.id, r.name, r.type, r.room, r.comment, r.sort_order,
-        rp.price,
-        MIN(fr.period_years) AS period_years
-    FROM requirements r
-    JOIN visits v ON v.id = :visit_id
+    SELECT
+        r.id,
+        r.name,
+        r.type,
+        r.room,
+        r.comment,
+        r.sort_order,
+        vr.is_selected,
+        vr.is_added_manually,
+        rp.price
+    FROM visit_requirements vr
+    JOIN requirements r
+        ON r.id = vr.requirement_id
+    JOIN visits v
+        ON v.id = vr.visit_id
     LEFT JOIN LATERAL (
         SELECT
             CASE
@@ -94,7 +103,7 @@ $stmt = $pdo->prepare("
                             SELECT erp.price
                             FROM employer_requirement_prices erp
                             WHERE erp.employer_id = v.employer_id
-                            AND erp.requirement_id = r.id
+                              AND erp.requirement_id = r.id
                             ORDER BY erp.valid_from DESC
                             LIMIT 1
                         ),
@@ -107,65 +116,29 @@ $stmt = $pdo->prepare("
                         )
                     )
 
-                            WHEN v.price_mode = 'fixed'
-                                AND r.name NOT IN (
-                                    'Оформление ЛМК',
-                                    'Фото 3х4',
-                                    'Гигиеническое обучение'
-                                )
-                                THEN NULL
+                WHEN v.price_mode = 'fixed'
+                    AND r.name NOT IN (
+                        'Оформление ЛМК',
+                        'Фото 3х4',
+                        'Гигиеническое обучение'
+                    )
+                    THEN NULL
 
-                            ELSE (
-                                SELECT rp.price
-                                FROM requirement_prices rp
-                                WHERE rp.requirement_id = r.id
-                                ORDER BY rp.valid_from DESC
-                                LIMIT 1
-                            )
-                        END AS price
-                ) rp ON TRUE
-
-    LEFT JOIN factor_requirements fr
-        ON fr.requirement_id = r.id
-
-    LEFT JOIN visit_hazard_factors vhf
-        ON vhf.hazard_factor_id = fr.hazard_factor_id
-       AND vhf.visit_id = :visit_id
-
-    WHERE
-    (
-        (
-            r.is_global = TRUE
-            AND (r.gender IS NULL OR r.gender = :gender)
-        )
-        OR
-        (
-            vhf.visit_id IS NOT NULL
-        )
-    )
-    AND (r.min_age IS NULL OR r.min_age <= :age)
-    AND (fr.exam_type IS NULL OR fr.exam_type = :exam_type)
-    AND r.is_active = TRUE
-
-    GROUP BY
-        r.id,
-        r.name,
-        r.type,
-        r.room,
-        r.comment,
-        r.sort_order,
-        rp.price
-
-    ORDER BY
-        r.sort_order,
-        r.name
+                ELSE (
+                    SELECT rp.price
+                    FROM requirement_prices rp
+                    WHERE rp.requirement_id = r.id
+                    ORDER BY rp.valid_from DESC
+                    LIMIT 1
+                )
+            END AS price
+    ) rp ON TRUE
+    WHERE vr.visit_id = :visit_id
+    ORDER BY r.sort_order, r.name
 ");
 
 $stmt->execute([
-    'visit_id' => $visitId,
-    'gender' => $data['gender'],
-    'age' => $age,
-    'exam_type' => $data['exam_type']
+    'visit_id' => $visitId
 ]);
 
 $routeRequirements = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -226,10 +199,11 @@ if ($data['price_mode'] === 'fixed') {
     $totalPrice = 0;
 
     foreach ($routeRequirements as $req) {
-        $totalPrice += (float)$req['price'];
+        if ($req['is_selected']) {
+            $totalPrice += (float)$req['price'];
+        }
     }
 }
-
 // ======================
 // Настраиваем header
 // ======================
@@ -442,6 +416,20 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="route-actions">
                 <button type="button" onclick="toggleAll(true)">Выбрать всё</button>
                 <button type="button" onclick="toggleAll(false)">Снять всё</button>
+                <button type="button" id="add-requirement">
+                    + Добавить услугу
+                </button>
+                
+            </div>
+            <div id="add-requirement-form" hidden>
+                <input
+                    type="text"
+                    id="requirement-search"
+                    placeholder="Введите название услуги"
+                    autocomplete="off"
+                >
+
+                <div id="requirement-results" class="requirement-results"></div>
             </div>
 
             <table class="route-table">
@@ -456,11 +444,35 @@ require_once __DIR__ . '/../includes/header.php';
                     <?php foreach ($routeRequirements as $req): ?>
                         <tr class="route-row">
                             <td>
-                                <label class="route-check">
-                                    <!-- Добавлен data-req-id -->
-                                    <input type="checkbox" class="route-toggle" data-req-id="<?= $req['id'] ?>" checked>
-                                    <?= e($req['room'] ?: '—') ?>
-                                </label>
+                                <?php if ($req['is_added_manually']): ?>
+
+                                     <div class="manual-requirement">
+                                        <button
+                                            type="button"
+                                            class="delete-requirement no-print"
+                                            data-req-id="<?= $req['id'] ?>"
+                                            title="Удалить услугу"
+                                        >×</button>
+
+                                        <span class="route-room">
+                                            <?= e($req['room'] ?: '—') ?>
+                                        </span>
+                                    </div>
+                                <?php else: ?>
+
+                                    <label class="route-check">
+                                        <input
+                                            type="checkbox"
+                                            class="route-toggle"
+                                            data-req-id="<?= $req['id'] ?>"
+                                            <?= $req['is_selected'] ? 'checked' : '' ?>
+                                        >
+                                        <span class="route-room">
+                                            <?= e($req['room'] ?: '—') ?>
+                                        </span>
+                                    </label>
+
+                                <?php endif; ?>
                             </td>
                             <td>
                                 <div class="route-item-name"><?= e($req['name']) ?></div>
@@ -621,26 +633,40 @@ function printDocument(documentType) {
 
 function recalcTotal() {
     let total = 0;
+
     document.querySelectorAll('.route-row').forEach(row => {
         const checkbox = row.querySelector('.route-toggle');
         const priceCell = row.querySelector('.route-price-cell');
+
         if (!priceCell) return;
 
         const price = parseFloat(priceCell.dataset.price || 0);
+        const selected = !checkbox || checkbox.checked;
 
-        if (checkbox && checkbox.checked) {
+        if (selected) {
             total += price;
-            priceCell.textContent = price.toLocaleString('ru-RU', {minimumFractionDigits: 2}) + ' ₽';
+
+            priceCell.textContent = price.toLocaleString('ru-RU', {
+                minimumFractionDigits: 2
+            }) + ' ₽';
+
             row.classList.remove('is-disabled-print');
         } else {
-            priceCell.textContent = '0,00 ₽'; 
+            priceCell.textContent = '0,00 ₽';
             row.classList.add('is-disabled-print');
         }
     });
-    
+
+    if (priceMode === 'fixed') {
+        total = fixedPrice;
+    }
+
     const totalRow = document.querySelector('.total-price-sum');
+
     if (totalRow) {
-        totalRow.textContent = total.toLocaleString('ru-RU', {minimumFractionDigits: 2}) + ' ₽';
+        totalRow.textContent = total.toLocaleString('ru-RU', {
+            minimumFractionDigits: 2
+        }) + ' ₽';
     }
 }
 
@@ -649,6 +675,9 @@ document.querySelectorAll('.route-toggle').forEach(cb => {
         const row = this.closest('.route-row');
         if (row) row.style.opacity = this.checked ? 1 : 0.4;
         
+        const visitId = <?= (int)$visitId ?>;
+        const priceMode = <?= json_encode($data['price_mode']) ?>;
+        const fixedPrice = <?= json_encode((float)($data['fixed_price'] ?? 0)) ?>;
         recalcTotal();
 
         fetch('/visit/update_completed.php', {
@@ -663,6 +692,112 @@ document.querySelectorAll('.route-toggle').forEach(cb => {
     });
 });
 
+const visitId = <?= (int)$visitId ?>;
+const priceMode = <?= json_encode($data['price_mode']) ?>;
+const fixedPrice = <?= json_encode((float)($data['fixed_price'] ?? 0)) ?>;
+const addButton = document.getElementById('add-requirement');
+const addForm = document.getElementById('add-requirement-form');
+const searchInput = document.getElementById('requirement-search');
+const results = document.getElementById('requirement-results');
+
+addButton.addEventListener('click', () => {
+    addForm.hidden = false;
+    searchInput.focus();
+});
+
+searchInput.addEventListener('input', async () => {
+    const search = searchInput.value.trim();
+
+    console.log('SEARCH:', search);
+
+    if (search.length < 2) {
+        results.innerHTML = '';
+        return;
+    }
+
+    const response = await fetch(
+        `/visit/search_requirements.php?search=${encodeURIComponent(search)}`
+    );
+
+    console.log('STATUS:', response.status);
+
+    const requirements = await response.json();
+
+    console.log('RESULT:', requirements);
+
+    results.innerHTML = requirements.map(req => `
+        <div
+            class="requirement-option"
+            data-id="${req.id}"
+        >
+            ${req.name}
+        </div>
+    `).join('');
+});
+
+results.addEventListener('click', async (event) => {
+    const option = event.target.closest('.requirement-option');
+
+    if (!option) return;
+
+    const requirementId = option.dataset.id;
+
+    const response = await fetch('/visit/add_requirement.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            visit_id: visitId,
+            requirement_id: requirementId
+        })
+    });
+
+    const data = await response.json();
+
+    if (!data.success) {
+        alert(data.error);
+        return;
+    }
+
+    console.log('Добавлена услуга:', data.requirement);
+
+    addForm.hidden = true;
+    searchInput.value = '';
+    results.innerHTML = '';
+
+    location.reload();
+});
+
+document.addEventListener('click', async (event) => {
+    const button = event.target.closest('.delete-requirement');
+
+    if (!button) return;
+
+    const requirementId = button.dataset.reqId;
+
+    const response = await fetch('/visit/delete_requirement.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            visit_id: visitId,
+            requirement_id: requirementId
+        })
+    });
+
+    const data = await response.json();
+
+    if (!data.success) {
+        alert(data.error);
+        return;
+    }
+
+    button.closest('.route-row').remove();
+    recalcTotal();
+});
+
 function toggleAll(state) {
     document.querySelectorAll('.route-toggle').forEach(cb => {
         if (cb.checked !== state) {
@@ -672,7 +807,6 @@ function toggleAll(state) {
     });
 }
 
-// Печать через изолированный iframe
 // Печать через изолированный iframe
 function printRouteSheet(showPrices = true) {
     const priceMode = <?= json_encode($data['price_mode']) ?>;
@@ -694,7 +828,7 @@ function printRouteSheet(showPrices = true) {
     const boldServices = [
     'Исследование крови на брюшной тиф',
     'Анализ крови на HBs-Ag, анти-HBc-Ig (суммарные), анти-HCV-Ig (суммарные), ВИЧ'
-];
+    ];
 
     // ---------------------------------------------------------
     // 1. Создаём скрытый iframe
@@ -1173,6 +1307,10 @@ function printRouteSheet(showPrices = true) {
         .route-table tr {
             break-inside: avoid;
             page-break-inside: avoid;
+        }
+
+        .no-print {
+            display: none !important;
         }
     `;
 

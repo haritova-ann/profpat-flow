@@ -5,43 +5,32 @@ require_once __DIR__ . '/../config/db.php';
 header('Content-Type: application/json');
 
 try {
-    $raw = file_get_contents('php://input');
-
     $data = json_decode(file_get_contents('php://input'), true);
 
     $visitId = (int)($data['visit_id'] ?? 0);
     $requirementId = (int)($data['requirement_id'] ?? 0);
-    $isSelected = (bool)($data['completed'] ?? false);
 
     if (!$visitId || !$requirementId) {
         throw new Exception('Некорректные данные');
     }
 
     $stmt = $pdo->prepare("
-    UPDATE visit_requirements
-    SET
-        is_selected = CAST(:is_selected AS BOOLEAN),
-        updated_at = NOW()
-    WHERE visit_id = :visit_id
-      AND requirement_id = :requirement_id
+        DELETE FROM visit_requirements
+        WHERE visit_id = :visit_id
+          AND requirement_id = :requirement_id
+          AND is_added_manually = TRUE
     ");
 
     $stmt->execute([
         'visit_id' => $visitId,
-        'requirement_id' => $requirementId,
-        'is_selected' => $isSelected ? 'true' : 'false'
+        'requirement_id' => $requirementId
     ]);
 
-    if ($stmt->rowCount() === 0) {
-        throw new Exception('Услуга не найдена');
-    }
-
-    echo json_encode(['success' => true]);
+    echo json_encode([
+        'success' => true
+    ]);
 
 } catch (Exception $e) {
-
-    error_log('ERROR: ' . $e->getMessage());
-
     http_response_code(400);
 
     echo json_encode([
