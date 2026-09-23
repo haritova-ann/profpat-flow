@@ -72,3 +72,19 @@ WHERE name = 'Рентгенография длинных трубчатых к�
 UPDATE requirements
 SET is_active = FALSE
 WHERE name = 'Профпатолог';
+
+UPDATE requirements
+SET name = 'Метгемоглобин'
+WHERE name = 'Исследование уровня метгемоглобина в крови';
+
+UPDATE requirements
+SET name = 'Ретикулоциты'
+WHERE name = 'Исследование уровня ретикулоцитов в крови';
+
+UPDATE requirements
+SET name = 'Карбоксигемоглобин'
+WHERE name = 'Исследование уровня карбоксигемоглобина в крови';
+
+UPDATE requirements
+SET name = 'Исследование крови на сифилис'
+WHERE name = 'Исследование крови на RW';

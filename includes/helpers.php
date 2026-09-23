@@ -68,7 +68,7 @@ function formatAddress($document)
         $document['district'] ?? '',
         $document['locality'] ?? '',
         !empty(trim($document['street'] ?? ''))
-            ? 'ул. ' . $document['street']
+            ? $document['street']
             : '',
 
         !empty(trim($document['house'] ?? ''))
@@ -92,7 +92,7 @@ function formatEmployerAddress($document)
         $document['employer_district'] ?? '',
         $document['employer_locality'] ?? '',
         !empty(trim($document['employer_street'] ?? ''))
-            ? 'ул. ' . $document['employer_street']
+            ? $document['employer_street']
             : '',
 
         !empty(trim($document['employer_house'] ?? ''))
