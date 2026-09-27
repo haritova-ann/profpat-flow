@@ -1,4 +1,4 @@
-const { visitId, priceMode, fixedPrice, gender, patient, psychiatricService } = window.visitData;
+const { visitId, priceMode, fixedPrice, gender, patient, psychiatricService, psychiatricExam } = window.visitData;
 
 function printDocument(documentType) {
     window.open(`/visit/print_document.php?visit_id=${visitId}&type=${documentType}`, '_blank');
@@ -177,6 +177,83 @@ function toggleAll(state) {
         }
     });
 }
+
+function customizePsychiatricRooms() {
+    if (!psychiatricExam) return;
+
+    document
+        .querySelectorAll('.route-row[data-req-id="8"], .route-row[data-req-id="9"]')
+        .forEach(row => {
+            const roomCell = row.querySelector('.route-room');
+
+            if (roomCell) {
+                roomCell.textContent = '6-А';
+            }
+        });
+}
+
+function customizeSurgeonComment() {
+    const hasGastroscopy = document.querySelector(
+        '.route-row[data-req-id="32"]'
+    );
+
+    const hasUltrasound = document.querySelector(
+        '.route-row[data-req-id="23"]'
+    );
+
+    if (!hasGastroscopy || !hasUltrasound) return;
+
+    const surgeonRow = [...document.querySelectorAll('.route-row')]
+        .find(row =>
+            row.querySelector('.route-item-name')?.textContent.trim() === 'Хирург'
+        );
+
+    if (!surgeonRow) return;
+
+    let comment = surgeonRow.querySelector('.route-comment');
+
+    if (!comment) {
+        comment = document.createElement('div');
+        comment.className = 'route-comment';
+        surgeonRow.querySelector('.route-item-name').after(comment);
+    }
+
+    comment.textContent = 'приём с результатами ФГДС и УЗИ';
+}
+
+function customizePelvicUltrasound() {
+    const row = document.querySelector(
+        '.route-row[data-req-id="24"]'
+    );
+
+    if (!row) return;
+
+    const room = row.querySelector('.route-room');
+
+    if (!room) return;
+
+    if (gender === 'male') {
+        room.textContent = '19 или 29 (2 эт)';
+
+        let comment = row.querySelector('.route-comment');
+
+        if (!comment) {
+            comment = document.createElement('div');
+            comment.className = 'route-comment';
+            row.querySelector('.route-item-name').append(comment);
+        }
+
+        comment.textContent = 'На полный мочевой пузырь';
+    }
+
+    if (gender === 'female') {
+        room.textContent = '23 (2 эт)';
+    }
+}
+
+customizeSurgeonComment();
+customizePsychiatricRooms();
+customizePelvicUltrasound();
 
 // Печать через изолированный iframe
 function printRouteSheet(showPrices = true) {

@@ -657,7 +657,9 @@ window.visitData = {
         middleName: <?= json_encode($data['middle_name']) ?>
     },
 
-    psychiatricService: <?= json_encode($psychiatricService ?? null) ?>
+    psychiatricService: <?= json_encode($psychiatricService ?? null) ?>,
+
+    psychiatricExam: <?= $data['psychiatric_exam'] ? 'true' : 'false' ?>
 };
 </script>
 
