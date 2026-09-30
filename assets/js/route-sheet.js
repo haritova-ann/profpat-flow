@@ -1,4 +1,4 @@
-const { visitId, priceMode, fixedPrice, gender, patient, psychiatricService, psychiatricExam } = window.visitData;
+const { visitId, priceMode, fixedPrice, gender, patient, psychiatricService, psychiatricExam, employerId } = window.visitData;
 
 function printDocument(documentType) {
     window.open(`/visit/print_document.php?visit_id=${visitId}&type=${documentType}`, '_blank');
@@ -251,9 +251,29 @@ function customizePelvicUltrasound() {
     }
 }
 
-customizeSurgeonComment();
-customizePsychiatricRooms();
+function customizePsychiatricRoomsByEmployer() {
+    const employers = [288, 12, 90, 282, 284, 18, 22, 86]; // 288, 12, 90, 282, 284, 18, 22, 86
+
+    if (!employers.includes(Number(employerId))) return;
+
+    document
+        .querySelectorAll(
+            '.route-row[data-req-id="8"], .route-row[data-req-id="9"]'
+        )
+        .forEach(row => {
+            const room = row.querySelector('.route-room');
+
+            if (room) {
+                room.textContent = '4';
+            }
+        });
+}
+
+
 customizePelvicUltrasound();
+customizeSurgeonComment();
+customizePsychiatricRoomsByEmployer();
+customizePsychiatricRooms();
 
 // Печать через изолированный iframe
 function printRouteSheet(showPrices = true) {

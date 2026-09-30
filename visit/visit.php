@@ -659,7 +659,8 @@ window.visitData = {
 
     psychiatricService: <?= json_encode($psychiatricService ?? null) ?>,
 
-    psychiatricExam: <?= $data['psychiatric_exam'] ? 'true' : 'false' ?>
+    psychiatricExam: <?= $data['psychiatric_exam'] ? 'true' : 'false' ?>, 
+    employerId: <?= $data['employer_id']?>
 };
 </script>
 
