@@ -25,7 +25,16 @@ $stmt = $pdo->prepare("
         v.id AS visit_id,
         v.*,
         p.*,
-        STRING_AGG(DISTINCT hf.code, ', ') AS hazard_factors,
+
+        COALESCE(
+            JSON_AGG(
+                DISTINCT JSONB_BUILD_OBJECT(
+                    'code', hf.code,
+                    'name', hf.name
+                )
+            ) FILTER (WHERE hf.id IS NOT NULL),
+            '[]'
+        ) AS hazard_factors,
         STRING_AGG(DISTINCT pf.code, ', ') AS psychiatric_factors
     FROM visits v
     JOIN patients p ON p.id = v.patient_id
@@ -204,6 +213,40 @@ if ($data['price_mode'] === 'fixed') {
         }
     }
 }
+
+    // ======================
+    // 5. Подготавливаем данные для подстановки
+    // ======================
+
+    // Форматируем тип осмотра
+    $examTypes = [
+        'periodic' => 'ПЕРИОДИЧЕСКИЙ',
+        'preliminary' => 'ПРЕДВАРИТЕЛЬНЫЙ',
+        'ad-hoc' => 'ВНЕОЧЕРЕДНОЙ'
+    ];
+    $examType = $examTypes[$data['exam_type']] ?? $data['exam_type'];
+
+    // Форматируем тип осмотра для вставки в шпаку заключения
+    $examTypesFormattedForConclusion = [
+        'periodic' => 'ПЕРИОДИЧЕСКОГО',
+        'preliminary' => 'ПРЕДВАРИТЕЛЬНОГО',
+        'ad-hoc' => 'ВНЕОЧЕРЕДНОГО'
+    ];
+    $examTypeFormattedForConclusion = $examTypesFormattedForConclusion[$data['exam_type']] ?? $data['exam_type'];
+
+    // Форматируем тип осмотра для вставки в заключение
+    $examTypesFormatted = [
+        'periodic' => 'периодического',
+        'preliminary' => 'предварительного',
+        'ad-hoc' => 'внеочередного'
+    ];
+    $examTypeFormatted = $examTypesFormatted[$data['exam_type']] ?? $data['exam_type'];
+
+    $data['hazard_factors'] = json_decode($data['hazard_factors'], true) ?? [];
+    $data['hazard_factor_codes'] = implode(
+    ', ',
+    array_column($data['hazard_factors'], 'code')
+);
 // ======================
 // Настраиваем header
 // ======================
@@ -326,7 +369,7 @@ require_once __DIR__ . '/../includes/header.php';
             
             <div class="info-row">
                 <div class="info-label">Вредные факторы:</div>
-                <div class="info-value"><?= e($data['hazard_factors']) ?></div>
+                <div class="info-value"><?= e($data['hazard_factor_codes']) ?></div>
             </div>
             
             <div class="info-row psychiatric-row">
@@ -529,6 +572,10 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="section-title">Печать документов</div>
             
             <div class="print-buttons">
+                <button class="print-btn-other" id="print-package-btn">
+                    Обложка + согласия + заключение + справка психиатра
+                </button>
+            
                 <button class="print-btn" onclick="printDocument('pack_without_psy')">
                     Пакет документов (обложка, согласия, заключение)
                 </button>
@@ -664,7 +711,50 @@ window.visitData = {
 };
 </script>
 
+<script>
+const printData = <?= json_encode([
+    'patient' => [
+        'cardNumber' => $data['medical_card_number'] ?? '',
+        'fullName' => formatFullName($data),
+        'lastName' => $data['last_name'] ?? '',
+        'firstName' => $data['first_name'] ?? '',
+        'middleName' => $data['middle_name'] ?? '',
+        'birthDate' => formatDate($data['birth_date']),
+        'gender' => formatGender($data),
+        'snils' => $data['snils'] ?? '',
+        'document' => formatIdentityDocument($data),
+        'documentAuthority' => $documentAuthority,
+        'phone' => $data['phone_number'] ?? '',
+        'email' => $data['email'] ?? '',
+        'address' => formatAddress($data),
+    ],
+    'exam' => [
+        'date' => formatDate($data['exam_date']),
+        'type' => $examType,
+        'typeFormatted' => $examTypeFormatted,
+        'typeConclusion' => $examTypeFormattedForConclusion,
+        'hazardFactors' => $data['hazard_factors'],
+        'psychiatricExam' => $data['psychiatric_exam'] ? 'Да' : 'Нет',
+        'psychiatricFactorsName' => $data['psychiatric_factors_name'] ?? '',
+    ],
+    'employer' => [
+        'name' => $data['organization_name'] ?? '',
+        'department' => $data['organization_department'] ?? '',
+        'position' => $data['position'] ?? '',
+        'inn' => $data['inn'] ?? '',
+        'ogrn' => $data['ogrn'] ?? '',
+        'okvd' => $data['okvd'] ?? '',
+        'phone' => $data['employer_phone'] ?? '',
+        'email' => $data['employer_email'] ?? '',
+        'address' => formatEmployerAddress($data),
+    ],
+], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+</script>
+
+
+
 <script src="/assets/js/route-sheet.js"></script>
+<script src="/assets/js/print-package.js"></script>
 
 <?php
 

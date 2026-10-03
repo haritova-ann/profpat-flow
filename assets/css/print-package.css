@@ -1,0 +1,707 @@
+/* Общие настройки для симуляции листа А4 на экране */
+body {
+    background-color: #f0f0f0;
+    line-height: 1.0;
+    font-size: 14px;
+    color: #000;
+    margin: 0;
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+}
+
+.medical-card {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Контейнер страницы формата А4 */
+.document-page {
+    background-color: #fff;
+    width: 210mm;
+    min-height: 297mm;
+    padding: 5mm 5mm 5mm 5mm; /* Стандартные поля: левое шире под подшивку */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+    break-after: page;
+    page-break-after: always;
+}
+
+.document-page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+}
+
+/* Правый верхний блок */
+.doc-header {
+    text-align: right;
+    font-size: 10px;
+    line-height: 1.1;
+    margin-bottom: 20px;
+    margin-left: auto;
+    width: 60%;
+}
+
+/* Главный заголовок */
+.main-title-mc {
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    line-height: 1.3;
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+/* Структура строк анкеты */
+.doc-content {
+    display: flex;
+    flex-direction: column;
+    gap: 5px; /* Отступы между строками */
+}
+
+.form-row {
+    display: flex;
+    align-items: flex-end; /* Выравнивание текста по нижней линии */
+    width: 100%;
+}
+
+/* Элементы в одну строку (например, Дата рождения и Пол) */
+.inline-group {
+    display: flex;
+    gap: 30px;
+}
+
+.inline-item {
+    display: flex;
+    align-items: flex-end;
+    flex: 1;
+}
+
+/* Названия полей */
+.label {
+    white-space: nowrap; /* Запрет переноса, если не помещается */
+    padding-right: 5px;
+}
+
+/* Разрешаем перенос строк только для длинных специфических заголовков */
+.form-row:nth-last-child(2) .label,
+.form-row:last-child .label {
+    white-space: normal;
+}
+
+/* Жирный текст для строки "Вид работы..." */
+.font-bold {
+    font-weight: bold;
+}
+
+/* Заполняемые значения данных */
+.value {
+    flex-grow: 1;
+    padding: 0 0 1px 5px;
+    border-bottom: 1px dotted #7c7a7a;
+    min-height: 15px;
+    display: flex;
+    align-items: flex-end;
+}
+
+.value-bold {
+    font-weight: bold;
+}
+
+/* =========================
+   СОГЛАСИЯ
+   ========================= */
+
+/* Общий лист с двумя согласиями */
+.consent-page {
+    font-family: "Times New Roman", Times, serif;
+}
+
+/* Каждое согласие — отдельный блок */
+.consent-block {
+    height: 47%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* Заголовок согласия */
+.consent-title {
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    margin: 0 0 5px 0;
+    line-height: 1.2;
+}
+
+.personal-data-title {
+    display: block;       /* Гарантирует, что элемент займет всю ширину и начнется с новой строки */
+    clear: both;         /* Сбрасывает любые возможные обтекания */
+    margin-top: 15px;    /* Делает аккуратный промежуток (25px) между датой и текстом */
+    margin-bottom: 5px; /* Отступ от самого заголовка до контента ниже */
+    text-align: center;
+}
+
+
+/* Шапка с данными пациента */
+.consent-header {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size:12px;
+}
+
+.consent-header p {
+    display: flex;
+    align-items: flex-end;
+    margin: 0;
+    width: 100%;
+    font-size:12px;
+}
+
+.consent-header .consent-hint {
+    font-size: 12px;
+    justify-content: center;
+    margin-top: -4px;
+}
+
+/* Линии с данными */
+.consent-line {
+    border-bottom: 1px solid #757474;
+    flex-grow: 1;
+    padding-left: 5px;
+    min-height: 10px;
+}
+
+/* Основной текст */
+.consent-text {
+    text-align: justify;
+    font-size: 12px;
+    line-height: 1.15;
+}
+
+.consent-text p {
+    margin: 0 0 2px 0;
+    text-indent: 25px;
+}
+
+
+/* =========================
+   ПОДПИСИ
+   ========================= */
+
+.consent-signatures {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.signature-row {
+    display: flex;
+    gap: 40px;
+    width: 100%;
+}
+
+.signature-field {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.signature-line {
+    width: 100%;
+    min-height: 15px;
+    font-size: 12px;
+    border-bottom: 1px solid #000;
+}
+
+.signature-short {
+    width: 30%;
+}
+
+.signature-wide {
+    flex-grow: 1;
+}
+
+.signature-field > span:last-child,
+.signature-date > span:last-child {
+    font-size: 9px;
+    color: #333;
+    text-align: center;
+    margin-top: 2px;
+}
+
+/* Дата */
+.signature-date {
+    width: 40%;
+    display: flex;
+    font-size: 12px;
+    flex-direction: column;
+    align-items: center;
+}
+
+.date-line {
+    width: 100%;
+    min-height: 15px;
+    border-bottom: 1px solid #000;
+    text-align: center;
+}
+
+/* =========================
+   СОГЛАСИЕ НА ПЕРСОНАЛЬНЫЕ ДАННЫЕ
+   ========================= */
+
+.personal-data-signature {
+    margin-top: 5px;
+}
+
+/* ===================================================
+   ИЗОЛИРОВАННЫЕ СТИЛИ ДЛЯ ЗАКЛЮЧЕНИЯ (ФОРМА 3)
+   =================================================== */
+
+/* Принудительно задаем шрифт Arial для всего бланка */
+.conclusion-page {
+    font-family: "Times New Roman", Times, serif !important;
+    padding: 5mm 5mm 5mm 5mm !important;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Угловой штамп слева вверху */
+.conclusion-page .cl-stamp {
+    font-size: 10px;
+    font-weight: bold;
+    line-height: 1.2;
+    text-align: left;
+    margin-bottom: 25px;
+    width: 60%;
+}
+
+/* Заголовок документа заключения */
+.conclusion-page .cl-main-title {
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    line-height: 1.3;
+    margin: 0 0 30px 0;
+}
+
+/* Контейнер для строк анкеты */
+.conclusion-page .cl-form-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.conclusion-page .cl-row {
+    display: flex;
+    align-items: flex-end;
+    width: 100%;
+}
+
+/* Для строк с длинными названиями полей в две строки */
+.conclusion-page .cl-multiline-row {
+    align-items: flex-end;
+}
+.conclusion-page .cl-multiline-row .cl-label {
+    line-height: 1.2;
+}
+
+/* Группировка даты рождения и пола на одной строке */
+.conclusion-page .cl-inline-group {
+    display: flex;
+    gap: 40px;
+}
+
+.conclusion-page .cl-inline-item {
+    display: flex;
+    align-items: flex-end;
+    flex: 1;
+}
+
+/* Названия полей ввода */
+.conclusion-page .cl-label {
+    font-size: 14px;
+    white-space: nowrap;
+    padding-right: 6px;
+}
+
+.conclusion-page .cl-value {
+    font-size: 14px;
+    padding-left: 5px;
+    font-weight: normal;
+}
+
+.conclusion-page .cl-value-bold {
+    font-weight: bold;
+}
+
+/* Текст с упоминанием приказа №29н */
+.conclusion-page .cl-law-section {
+    font-size: 14px;
+    margin-top: 8px;
+    margin-bottom: 2px;
+}
+
+/* Блок вердикта результатов осмотра */
+.conclusion-page .cl-results-block {
+    font-size: 14px;
+    line-height: 1.4;
+    margin-top: 5px;
+}
+
+.conclusion-page .cl-result-intro {
+    margin: 0 0 12px 0;
+    font-weight: bold;
+}
+
+.conclusion-page .cl-status-verdict {
+    margin: 0 0 20px 0;
+    font-weight: bold;
+}
+
+.conclusion-page .cl-underline-bold {
+    text-decoration: underline;
+}
+
+/* Стилизация чекбоксов "Группы здоровья" */
+.conclusion-page .cl-health-groups {
+    display: flex;
+    align-items: center;
+    gap: 100px;
+    margin-bottom: 55px;
+}
+
+.conclusion-page .cl-checkbox-box {
+    border: 1.5px solid #000;
+    width: 75px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    padding-left: 6px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+/* Нижний блок подписей комиссии */
+.conclusion-page .cl-footer-signatures {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    margin-top: auto; /* Мягко толкает подписи к нижней части листа А4 */
+    margin-bottom: 30px;
+}
+
+.conclusion-page .cl-sig-row {
+    display: flex;
+    align-items: flex-end;
+    width: 100%;
+}
+
+.conclusion-page .cl-sig-line-wrapper {
+    flex-grow: 1;
+    max-width: 220px;
+    margin: 0 15px;
+}
+
+.conclusion-page .cl-date-row {
+    display: flex;
+    align-items: flex-end;
+    width: 100%;
+}
+
+.conclusion-page .cl-date-line-wrapper {
+    width: 160px;
+    margin-left: 215px;
+    text-align: center;
+}
+
+.conclusion-page .cl-bottom-solid-line {
+    display: block;
+    border-bottom: 1px solid #777676;
+    width: 100%;
+    min-height: 16px;
+}
+
+.conclusion-page .cl-doctor-name {
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+/* Самый нижний колонтитул бланка */
+.conclusion-page .cl-document-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    font-size: 10px;
+    margin-top: auto;
+}
+
+
+.conclusion-page .cl-footer-note {
+    color: #444;
+}
+
+/* Таблица */
+.conclusion-page .cl-hazard-table-wrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.conclusion-page .cl-hazard-label {
+    padding-top: 5px;
+}
+
+.conclusion-page .cl-hazard-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.conclusion-page .cl-hazard-table th,
+.conclusion-page .cl-hazard-table td {
+    border: 1px solid #000;
+    padding: 4px 6px;
+    vertical-align: top;
+}
+
+.conclusion-page .cl-hazard-table th:first-child,
+.conclusion-page .cl-hazard-table td:first-child {
+    width: 70px;
+    text-align: center;
+}
+
+.conclusion-page .cl-hazard-table th {
+    font-weight: bold;
+    text-align: center;
+}
+
+.conclusion-page .cl-bottom-block {
+    margin-top: auto;
+}
+
+.conclusion-page .cl-footer-signatures {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    margin-bottom: 25px;
+}
+
+.conclusion-page .cl-document-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    font-size: 10px;
+}
+
+.conclusion-page.tight .cl-form-container {
+    gap: 10px;
+}
+
+.conclusion-page.tight .cl-main-title {
+    margin-bottom: 24px;
+}
+
+.conclusion-page.tight .cl-hazard-table th,
+.conclusion-page.tight .cl-hazard-table td {
+    padding: 3px 5px;
+}
+
+.conclusion-page.tight .cl-results-block {
+    margin-top: 12px;
+}
+
+.conclusion-page.tight .cl-health-groups {
+    margin-bottom: 25px;
+}
+
+/* ===================================================
+   ИЗОЛИРОВАННЫЕ СТИЛИ ДЛЯ ДВУХ СПРАВОК (ФОРМА 4)
+   =================================================== */
+
+.certificates-page {
+    font-family: "Times New Roman", Times, serif !important;
+    padding: 10mm 15mm !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* Каждая из двух справок занимает ровно половину доступной высоты страницы А4 */
+.certificates-page .cert-block {
+    height: 46%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+/* Шапка справа */
+.certificates-page .cert-top-header {
+    text-align: right;
+    font-size: 10px;
+    line-height: 1.3;
+    margin-left: auto;
+    width: 60%;
+    margin-bottom: 10px;
+}
+
+/* Основной заголовок справки */
+.certificates-page .cert-main-title {
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.certificates-page .cert-subtitle {
+    font-weight: normal;
+    font-size: 12px;
+}
+
+.certificates-page .cert-line-short {
+    display: inline-block;
+    width: 60px;
+    border-bottom: 1px solid #7e7e7e;
+}
+
+/* Строка даты сверху "от «___» ________ 20__ г." */
+.certificates-page .cert-date-line {
+    text-align: center;
+    font-size: 14px;
+    margin: 15px 0;
+}
+
+.certificates-page .cert-line-day { display: inline-block; width: 30px; border-bottom: 1px solid #7e7e7e; }
+.certificates-page .cert-line-month { display: inline-block; width: 100px; border-bottom: 1px solid #7e7e7e; }
+.certificates-page .cert-line-year { display: inline-block; width: 30px; border-bottom: 1px solid #7e7e7e; }
+
+/* Вертикальная сетка анкеты */
+.certificates-page .cert-form-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* Небольшой отступ, чтобы все строго влезло на А4 */
+    margin-bottom: 15px;
+}
+
+.certificates-page .cert-row {
+    display: flex;
+    align-items: baseline;
+    width: 100%;
+}
+
+.certificates-page .cert-label {
+    font-size: 13px;
+    white-space: nowrap;
+    padding-right: 5px;
+}
+
+/* Сплошная тонкая линия заполнения полей */
+.certificates-page .cert-line-fill {
+    flex-grow: 1;
+}
+
+.certificates-page .cert-value {
+    font-size: 14px;
+    font-weight: bold;
+    padding-left: 5px;
+    line-height: 1.2;
+}
+
+/* Пункт 7 текста заключения */
+.certificates-page .cert-statement-text {
+    font-size: 14px;
+    line-height: 1.3;
+    text-align: justify;
+    margin: 0 0 20px 0;
+}
+
+/* Разделитель между верхней и нижней справкой */
+.certificates-page .cert-divider-space {
+    height: 4%;
+    border-top: 1px dashed #aaa; /* Мягкая линия реза */
+    margin: 10px 0;
+}
+
+/* Блок подписей врача внизу */
+.certificates-page .cert-footer-signatures {
+    display: flex;
+    align-items: flex-start;
+    width: 100%;
+    margin-top: auto; /* Прижимает блок к низу своей половины страницы */
+    padding-bottom: 10px;
+}
+
+/* Вертикальный стек текста должности и печати для нижнего блока */
+.certificates-page .cert-doctor-type {
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* Отступ между "Врач психиатр" и "Личная печать врача" */
+    width: 35%;
+}
+
+.certificates-page .cert-stamp-label {
+    font-size: 12px;
+}
+
+.certificates-page .cert-sig-box {
+    width: 25%;
+    margin: 0 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.certificates-page .cert-name-box {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.certificates-page .cert-bottom-line {
+    display: block;
+    border-bottom: 1px solid #7e7e7e;
+    width: 100%;
+    min-height: 18px;
+}
+
+.certificates-page .cert-sub-caption {
+    font-size: 9px;
+    color: #444;
+    margin-top: 3px;
+    text-align: center;
+}
+
+/* Вспомогательные хелперы */
+.certificates-page .flex-grow { flex-grow: 1; }
+.certificates-page .font-bold { font-weight: bold; }
+
+/* Стилизация для вывода на печать (Ctrl+P) */
+@media print {
+    body {
+        display: block;
+        background: #fff;
+        padding: 0;
+        margin: 0;
+    }
+
+    .document-page {
+        width: 210mm;
+        height: 297mm;
+        min-height: 297mm;
+        box-shadow: none;
+        padding: 5mm 5mm 5mm 5mm;
+
+        break-after: page;
+        page-break-after: always;
+    }
+
+    .document-page:last-child {
+        break-after: auto;
+        page-break-after: auto;
+    }
+}
