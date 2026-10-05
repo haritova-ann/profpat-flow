@@ -105,6 +105,7 @@ require_once __DIR__ . '/../includes/header.php';
             id="employerSearch"
             placeholder="Начните вводить название..."
             autocomplete="off"
+            required
         >
 
         <div id="employerDropdown" class="dropdown"></div>
